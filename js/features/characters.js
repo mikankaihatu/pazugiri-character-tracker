@@ -1,6 +1,6 @@
 // ===== キャラ一覧タブ =====
 // キャラの一覧（刀剣男士・衣装・刀種・ゆかり・奥義など）は data/master.xlsx → js/master/characters.js で管理する。
-// ここで編集するのは、所持・強化待ち・レベル上限・信頼度の育成状況だけ
+// ここで編集するのは、所持・レベル上限・信頼度の育成状況だけ
 
 const SECRET_COLORS = {
     '赤': { icon: '🔴', bg: '#ffebee' },
@@ -17,7 +17,6 @@ let filters = {
     costume: '',
     swordType: '',
     yukari: '',
-    needsUpgrade: false,
     levelCap: '',
     trustLevel: '',
     secretColor: ''
@@ -31,7 +30,6 @@ function matchesFilter(char) {
     if (filters.owned === 'notOwned' && p.owned) return false;
     if (filters.swordType && char.swordType !== filters.swordType) return false;
     if (filters.yukari && !yukariOf(char).includes(filters.yukari)) return false;
-    if (filters.needsUpgrade && !p.needsUpgrade) return false;
     if (filters.levelCap !== '' && p.levelCap !== parseInt(filters.levelCap)) return false;
     if (filters.trustLevel !== '' && p.trustLevel < parseInt(filters.trustLevel)) return false;
     if (filters.secretColor && char.secretColor !== filters.secretColor) return false;
@@ -44,7 +42,6 @@ function applyFilters() {
     filters.owned = document.getElementById('filter-owned').value;
     filters.swordType = document.getElementById('filter-swordType').value;
     filters.yukari = document.getElementById('filter-yukari').value;
-    filters.needsUpgrade = document.getElementById('filter-needsUpgrade').checked;
     filters.levelCap = document.getElementById('filter-levelCap').value;
     filters.trustLevel = document.getElementById('filter-trustLevel').value;
     filters.secretColor = document.getElementById('filter-secretColor').value;
@@ -52,7 +49,7 @@ function applyFilters() {
 }
 
 function clearFilters() {
-    filters = { keyword: '', owned: '', costume: '', swordType: '', yukari: '', needsUpgrade: false, levelCap: '', trustLevel: '', secretColor: '' };
+    filters = { keyword: '', owned: '', costume: '', swordType: '', yukari: '', levelCap: '', trustLevel: '', secretColor: '' };
     renderCharacters();
 }
 
@@ -79,9 +76,6 @@ function showCharEditDialog(name) {
         <div class="sub-title" style="margin-top: 16px;">育成状況</div>
         <div style="margin-bottom: 12px;">
             <label><input type="checkbox" id="edit-owned" ${p.owned ? 'checked' : ''} style="margin-right: 8px;">所持している</label>
-        </div>
-        <div style="margin-bottom: 12px;">
-            <label><input type="checkbox" id="edit-needsUpgrade" ${p.needsUpgrade ? 'checked' : ''} style="margin-right: 8px;">強化待ち</label>
         </div>
         <div style="margin-bottom: 12px;">
             <label style="display: block; font-size: 12px; margin-bottom: 4px; color: #666;">レベル上限</label>
@@ -132,7 +126,6 @@ function renderCharInfo(char) {
 function saveCharProgress(name) {
     setProgress(name, {
         owned: document.getElementById('edit-owned').checked,
-        needsUpgrade: document.getElementById('edit-needsUpgrade').checked,
         trustLevel: Math.min(MAX_TRUST_LEVEL, toCount(document.getElementById('edit-trustLevel').value)),
         levelCap: parseInt(document.getElementById('edit-levelCap').value) || 10
     });
@@ -192,9 +185,6 @@ function renderCharFilters() {
                 <label class="filter-label">信頼度（以上）</label>
                 <input type="number" id="filter-trustLevel" min="0" max="${MAX_TRUST_LEVEL}" placeholder="0-${MAX_TRUST_LEVEL}" value="${escapeHtml(filters.trustLevel)}" style="width: 100%; font-size: 12px;" onchange="applyFilters()">
             </div>
-            <div style="display: flex; align-items: flex-end;">
-                <label style="font-size: 12px;"><input type="checkbox" id="filter-needsUpgrade" ${filters.needsUpgrade ? 'checked' : ''} onchange="applyFilters()" style="margin-right: 4px;">強化待ち</label>
-            </div>
         </div>
         <button class="secondary small" onclick="clearFilters()">リセット</button>
     </div>`;
@@ -213,7 +203,6 @@ function renderCharCard(char) {
                     ${char.swordType ? badge('#e3f2fd', `⚔️ ${escapeHtml(char.swordType)}`) : ''}
                     ${yukariOf(char).map(y => badge('#e8f5e9', `🔗 ${escapeHtml(y)}`)).join('')}
                     ${color ? badge(color.bg, color.icon) : ''}
-                    ${p.needsUpgrade ? badge('#fff3e0', '🔧 強化待ち') : ''}
                     ${p.levelCap > 10 ? badge('#e0f2f1', `🔓 Lv上限${p.levelCap}`) : ''}
                     ${p.trustLevel > 0 ? badge('#f0f4c3', `💖 ${p.trustLevel}`) : ''}
                 </div>

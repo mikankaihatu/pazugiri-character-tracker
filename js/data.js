@@ -3,7 +3,7 @@
 
 // ===== データ構造 =====
 const INITIAL_DATA = {
-    characterProgress: {},   // { キャラ名: { owned, needsUpgrade, trustLevel, levelCap } }
+    characterProgress: {},   // { キャラ名: { owned, trustLevel, levelCap } }
     characterLevelUps: {},   // { キャラ名: { 素材名: 必要数 } }
     levelUpTargets: {},      // { キャラ名: 上限突破後のレベル上限 }（上限突破の素材をセットしたとき）
     inventory: {},           // { 素材名: 所持数 }
@@ -24,7 +24,6 @@ function validateData(savedData) {
         oldChars.forEach(c => {
             savedData.characterProgress[c.name] = {
                 owned: true,
-                needsUpgrade: !!c.needsUpgrade,
                 breakthrough: c.breakthrough || 0,   // 下でレベル上限に変換する
                 trustLevel: c.trustLevel || 0
             };
@@ -41,6 +40,8 @@ function validateData(savedData) {
         if (p.levelCap === undefined) p.levelCap = [10, 20, 30, 35][Math.min(p.breakthrough || 0, 3)];
         delete p.breakthrough;
     });
+    // 「強化待ち」はなくした
+    Object.values(savedData.characterProgress).forEach(p => delete p.needsUpgrade);
     // 素材の分類と合成レシピは js/master/materials.js に移った
     delete savedData.materialCategories;
     delete savedData.recipes;

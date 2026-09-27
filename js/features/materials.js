@@ -104,7 +104,7 @@ function renderMaterials() {
     } else {
         html += `<div class="add-material" style="margin-bottom: 0;">
             <select id="track-char" style="flex: 1;">
-                ${candidates.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(charLabel(c.name))}${getProgress(c.name).needsUpgrade ? '（強化待ち）' : ''}</option>`).join('')}
+                ${candidates.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(charLabel(c.name))}</option>`).join('')}
             </select>
             <button onclick="startTracking()">追加</button>
         </div>`;
