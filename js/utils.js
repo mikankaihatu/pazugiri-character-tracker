@@ -156,6 +156,55 @@ function charLabel(name) {
     return extra ? `${c.base}（${extra}）` : c.base;
 }
 
+// ===== 奥義の効果・範囲 =====
+// 奥義の説明文に書いてある言葉から、効果と範囲を見分ける（Excel に列を足さなくてよい）
+// 新しい効果が出てきたら、ここに1行足す
+const SKILL_EFFECTS = [
+    { group: '攻撃', label: 'ダメージ', pattern: /ダメージを与える/ },
+    { group: 'バフ', label: '攻撃力上昇', pattern: /攻撃力上昇/ },
+    { group: 'バフ', label: 'クリティカル率上昇', pattern: /クリティカル率上昇/ },
+    { group: 'バフ', label: 'ブレイク力上昇', pattern: /ブレイク力上昇/ },
+    { group: 'バフ', label: 'ガード率上昇', pattern: /ガード率上昇/ },
+    { group: 'バフ', label: '被ダメージ軽減', pattern: /被ダメージ軽減/ },
+    { group: 'バフ', label: 'バリア', pattern: /バリア/ },
+    { group: 'デバフ', label: '被ダメージ増加', pattern: /被ダメージ増加【/ },
+    { group: '盤面', label: 'ボム生成', pattern: /ボムを.*生成/ },
+    { group: '盤面', label: 'ト餓鬼の色を変える', pattern: /色に(変換|変化)/ },
+    { group: '盤面', label: 'ト餓鬼を集める', pattern: /集める/ },
+    { group: '盤面', label: 'ブレイクゲージ減少量アップ', pattern: /ブレイクゲージ減少量/ }
+];
+const SKILL_EFFECT_GROUPS = ['攻撃', 'バフ', 'デバフ', '盤面'];
+
+// 範囲はゲームの奥義名の横のアイコンと同じ1つだけ（ト餓鬼を消去する奥義のみ）
+// 上から順に調べる：「ランダムな【円型】」はランダム、「指定した【縦列】」は指定
+const SKILL_RANGES = [
+    { label: 'ランダム', pattern: /ランダム/ },
+    { label: '指定', pattern: /指定/ },
+    { label: 'すべて', pattern: /【すべて】/ },
+    { label: '円型', pattern: /円型/ },
+    { label: '縦列', pattern: /縦列/ },
+    { label: '横列', pattern: /横列/ },
+    { label: '扇型', pattern: /扇型/ }
+];
+
+function skillTextOf(char) {
+    return Object.values(char.skills || {}).join('\n');
+}
+
+// 奥義の効果の一覧（SKILL_EFFECTS の並び順）
+function skillEffectsOf(char) {
+    const text = skillTextOf(char);
+    return SKILL_EFFECTS.filter(e => e.pattern.test(text));
+}
+
+// 奥義の範囲（ランダム・指定・円型 など。消去しない奥義は ''）
+function skillRangeOf(char) {
+    const text = skillTextOf(char);
+    if (!/消去/.test(text)) return '';
+    const range = SKILL_RANGES.find(r => r.pattern.test(text));
+    return range ? range.label : '';
+}
+
 // ゆかりは複数ある（["夜", "天下五剣"]）。古い形の文字列でも配列にして返す
 function yukariOf(char) {
     if (Array.isArray(char.yukari)) return char.yukari;
