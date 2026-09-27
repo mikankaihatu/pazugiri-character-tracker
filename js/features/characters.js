@@ -89,6 +89,11 @@ function showCharEditDialog(name) {
                 </select>
             </div>
         </div>
+        <div style="margin-bottom: 12px;">
+            <label style="display: block; font-size: 12px; margin-bottom: 4px; color: #666;">経験値（レベルアップ画面の「/」の左の数・なくても大丈夫です）</label>
+            <input type="number" id="edit-exp" value="${typeof p.exp === 'number' ? p.exp : ''}" min="0" placeholder="例：27958" style="width: 100%;">
+            ${renderExpStatus(name)}
+        </div>
         <div style="margin-bottom: 16px;">
             <label style="display: block; font-size: 12px; margin-bottom: 4px; color: #666;">信頼度</label>
             <input type="number" id="edit-trustLevel" value="${p.trustLevel}" min="0" max="${MAX_TRUST_LEVEL}" style="width: 100%;">
@@ -99,6 +104,26 @@ function showCharEditDialog(name) {
         </div>
     </div>`;
     document.body.appendChild(modal);
+}
+
+// 次のレベル・レベル上限まであと何経験値か（保存してある育成状況から計算）
+function renderExpStatus(name) {
+    const { levelCap } = getProgress(name);
+    const { entered, toNext, toCap } = expStatus(name);
+    const lines = [];
+    if (toNext !== null) lines.push(`次のレベルまで あと <span class="stat-value">${toNext.toLocaleString()}</span>`);
+    if (toCap !== null) lines.push(`Lv${levelCap}まで あと <span class="stat-value">${toCap.toLocaleString()}</span>`);
+    if (lines.length === 0) return '';
+    const extra = [];
+    if (toCap !== null && toCap > 0 && expBooks().length > 0) {
+        const books = Object.entries(booksFor(toCap)).map(([b, n]) => `${escapeHtml(b.replace(/^経験値の書・/, ''))}×${n}`).join('・');
+        const owned = ownedBookExp();
+        extra.push(`<br>Lv${levelCap}までの経験値の書：${books}`);
+        extra.push(`<br>所持している経験値の書：経験値 ${owned.toLocaleString()} 分 ${owned >= toCap
+            ? '<span class="enough">（足りています）</span>'
+            : `<span class="shortage">（あと ${(toCap - owned).toLocaleString()} 足りません）</span>`}`);
+    }
+    return `<div class="hint" style="margin: 6px 0 0;">${lines.join('　')}${extra.join('')}${entered ? '' : '<br>（経験値を入れていないので、今のレベルになったばかりとして計算しています）'}</div>`;
 }
 
 // 足りていない情報があれば、情報提供フォームへのリンクを出す
@@ -131,10 +156,9 @@ function renderCharInfo(char) {
             </div>`).join('')}` : ''}
         ${levels.length > 0 ? `<div class="sub-title" style="margin-top: 12px;">能力</div>
             <table class="stat-table">
-                <tr><th>Lv</th><th>体力</th><th>攻撃</th><th>次Lvまで</th></tr>
-                ${levels.map(([lv, [hp, atk, exp]]) => `<tr${Number(lv) === getProgress(char.name).level ? ' style="background: #fff8e1; font-weight: 600;"' : ''}><td>${lv}</td><td>${hp}</td><td>${atk}</td><td>${exp !== undefined ? exp.toLocaleString() : '―'}</td></tr>`).join('')}
+                <tr><th>Lv</th><th>体力</th><th>攻撃</th></tr>
+                ${levels.map(([lv, [hp, atk]]) => `<tr${Number(lv) === getProgress(char.name).level ? ' style="background: #fff8e1; font-weight: 600;"' : ''}><td>${lv}</td><td>${hp}</td><td>${atk}</td></tr>`).join('')}
             </table>` : ''}
-        ${expToLevelCap(char.name) !== null ? `<div class="stat-row" style="margin-top: 8px;"><span>Lv${getProgress(char.name).levelCap}まで</span><span class="stat-value">あと ${expToLevelCap(char.name).toLocaleString()} 経験値</span></div>` : ''}
     </div>`;
 }
 
@@ -145,7 +169,9 @@ function saveCharProgress(name) {
         trustLevel: Math.min(MAX_TRUST_LEVEL, toCount(document.getElementById('edit-trustLevel').value)),
         levelCap,
         // レベルは 1 〜 レベル上限の間にする
-        level: Math.min(levelCap, Math.max(1, parseInt(document.getElementById('edit-level').value) || 1))
+        level: Math.min(levelCap, Math.max(1, parseInt(document.getElementById('edit-level').value) || 1)),
+        // 経験値は空なら記録しない
+        exp: document.getElementById('edit-exp').value === '' ? undefined : toCount(document.getElementById('edit-exp').value)
     });
     closeCharEditDialog();
     renderCharacters();

@@ -183,18 +183,55 @@ function nextLimitBreak(name) {
     return (char && (char.limitBreaks || []).find(lb => lb.from === cap)) || null;
 }
 
-// 今のレベルからレベル上限までに必要な経験値の合計（途中のレベルの経験値が1つでも不明なら null）
-function expToLevelCap(name) {
-    const char = CHARACTERS.find(c => c.name === name);
-    const { level, levelCap } = getProgress(name);
-    if (!char || level >= levelCap) return null;
-    let total = 0;
-    for (let lv = level; lv < levelCap; lv++) {
-        const stat = (char.levels || {})[lv];
-        if (!stat || stat[2] === undefined) return null;
-        total += stat[2];
+// ===== 経験値 =====
+// EXP_TABLE[N] は Lv N から N+1 に上がるのに必要な累計経験値（ゲーム画面の「/」の右の数・全キャラ共通）
+function expThreshold(level) {
+    if (level <= 1) return 0;   // Lv1 は経験値 0 から
+    const value = (typeof EXP_TABLE !== 'undefined' ? EXP_TABLE : {})[level - 1];
+    return value === undefined ? null : value;
+}
+
+// 今の経験値と、次のレベル・レベル上限までにあと何経験値いるか（わからないものは null）
+// 経験値を入れていない（または今のレベルと合わない）ときは、今のレベルになったばかりとして数える
+function expStatus(name) {
+    const { level, levelCap, exp } = getProgress(name);
+    const start = expThreshold(level), next = expThreshold(level + 1);
+    const fits = typeof exp === 'number' && (start === null || exp >= start) && (next === null || exp < next);
+    const current = fits ? exp : start;
+    const left = target => (current === null || target === null || level >= levelCap) ? null : Math.max(0, target - current);
+    return { current, entered: fits, toNext: left(next), toCap: left(expThreshold(levelCap)) };
+}
+
+// 経験値の書（素材シートの効果が「経験値+150」の品）。経験値の多い順
+function expBooks() {
+    return MATERIALS.filter(m => m.exp > 0).sort((a, b) => b.exp - a.exp);
+}
+
+// amount の経験値をためるのに使う経験値の書の数 { 書の名前: 冊数 }
+// 多い書から使い、端数は一番少ない書で埋める（少ない書を何冊も使うより上の書1冊ですむなら上の書にする）
+function booksFor(amount) {
+    const books = expBooks();
+    const counts = books.map(() => 0);
+    let rest = amount;
+    books.forEach((b, i) => {
+        const last = i === books.length - 1;
+        counts[i] = last ? Math.ceil(Math.max(0, rest) / b.exp) : Math.floor(rest / b.exp);
+        rest -= counts[i] * b.exp;
+    });
+    for (let i = books.length - 1; i > 0; i--) {
+        if (counts[i] * books[i].exp >= books[i - 1].exp) {
+            counts[i - 1] += 1;
+            counts[i] = 0;
+        }
     }
-    return total;
+    const result = {};
+    books.forEach((b, i) => { if (counts[i] > 0) result[b.name] = counts[i]; });
+    return result;
+}
+
+// 在庫にある経験値の書の経験値の合計
+function ownedBookExp() {
+    return expBooks().reduce((sum, b) => sum + getCount(b.name) * b.exp, 0);
 }
 
 function setProgress(name, changes) {
