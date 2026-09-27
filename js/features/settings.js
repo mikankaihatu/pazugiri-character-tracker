@@ -1,6 +1,20 @@
 // ===== 設定タブ =====
-// データのバックアップ
+// 不具合の報告と、データのバックアップ
 // （キャラ・素材・合成レシピ・ステージは data/master.xlsx → js/master/ で管理する）
+
+// ----- 不具合の報告 -----
+function copyEnvironmentInfo(button) {
+    const text = document.getElementById('envInfo');
+    const done = () => { button.textContent = 'コピーしました'; setTimeout(() => { button.textContent = '使用環境をコピー'; }, 2000); };
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text.value).then(done, () => { text.select(); document.execCommand('copy'); done(); });
+    } else {
+        // ファイルを直接開いたときなど、clipboard API が使えない場合
+        text.select();
+        document.execCommand('copy');
+        done();
+    }
+}
 
 // ----- バックアップ -----
 function exportData() {
@@ -45,8 +59,19 @@ function resetAllData() {
 
 // ----- 表示 -----
 function renderSettings() {
-    // バックアップ
+    // 不具合の報告
     let html = `<div class="settings-section">
+        <div class="settings-title">不具合の報告</div>
+        <div class="hint">おかしな動きを見つけたら、フォームから教えてください。下の「使用環境」をコピーしてフォームに貼ってもらえると、原因を調べやすくなります。</div>
+        <textarea id="envInfo" readonly rows="6" style="width: 100%; font-size: 12px; font-family: monospace; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 8px; resize: vertical;">${escapeHtml(environmentInfo())}</textarea>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="secondary" onclick="copyEnvironmentInfo(this)">使用環境をコピー</button>
+            <a href="${REPORT_FORM_URL}" target="_blank" rel="noopener"><button>報告フォームを開く</button></a>
+        </div>
+    </div>`;
+
+    // バックアップ
+    html += `<div class="settings-section">
         <div class="settings-title">データのバックアップ</div>
         <div class="hint">データはこのブラウザにだけ保存されています。別の端末に移すときや、念のための控えに使ってください。</div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">

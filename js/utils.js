@@ -43,6 +43,22 @@ function getCount(material) {
     return data.inventory[material] || 0;
 }
 
+// ===== 不具合の報告 =====
+const REPORT_FORM_URL = 'https://forms.gle/P9XydgGZhJAK1Bfn6';
+
+// 報告フォームに貼ってもらう使用環境（個人の育成データは含めない）
+function environmentInfo() {
+    const owned = Object.values(data.characterProgress).filter(p => p.owned).length;
+    return [
+        `日時: ${new Date().toLocaleString('ja-JP')}`,
+        `ブラウザ: ${navigator.userAgent}`,
+        `画面: ${window.innerWidth}×${window.innerHeight}`,
+        `URL: ${location.href}`,
+        `固定データ: キャラ${CHARACTERS.length} / 素材${MATERIALS.length} / ステージ${STAGES.length}`,
+        `保存データ: 所持${owned} / 周回記録${data.runs.length} / 育成中${Object.keys(data.characterLevelUps).length}`
+    ].join('\n');
+}
+
 // ===== 育成に必要な素材の計算（素材トラッキングと在庫管理で共通） =====
 // 素材トラッキングに登録した全キャラの必要素材を合計する
 function trackedNeeds() {
