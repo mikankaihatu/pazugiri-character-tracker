@@ -87,6 +87,18 @@ function checkMasterData() {
     const charNames = CHARACTERS.map(c => c.name);
     charNames.filter((n, i) => charNames.indexOf(n) !== i)
         .forEach(n => errors.push(`キャラ「${n}」が2回以上登録されています`));
+    // 刀剣男士番号：同じ刀剣男士（衣装・レア違い）は同じ番号、違う刀剣男士は違う番号
+    const numberOf = {}, baseOf = {};
+    CHARACTERS.filter(c => c.base && c.no !== undefined && c.no !== '').forEach(c => {
+        if (numberOf[c.base] !== undefined && numberOf[c.base] !== c.no) {
+            errors.push(`刀剣男士「${c.base}」に違う番号（${numberOf[c.base]} と ${c.no}）がついています`);
+        }
+        if (baseOf[c.no] !== undefined && baseOf[c.no] !== c.base) {
+            errors.push(`刀剣男士番号 ${c.no} が「${baseOf[c.no]}」と「${c.base}」の両方についています`);
+        }
+        numberOf[c.base] = numberOf[c.base] ?? c.no;
+        baseOf[c.no] = baseOf[c.no] ?? c.base;
+    });
     CHARACTERS.forEach(c => {
         if (c.secretColor && !['赤', '青', '黄'].includes(c.secretColor)) {
             errors.push(`キャラ「${c.name}」の奥義色「${c.secretColor}」は 赤 / 青 / 黄 のどれかにしてください`);

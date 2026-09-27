@@ -5,7 +5,7 @@
     python tools/convert_master.py
 
 Excel のシート:
-    キャラクター名 : 刀図鑑 / 刀剣男士 / 衣装 / レア / 刀種類 / ゆかり / 奥義色(赤,黄,青) / 奥義lv1説明文 / 1lv[体力,攻撃] / 2lv / 3lv ...
+    キャラクター名 : 刀剣男士番号 / 刀剣男士 / 衣装 / レア / 刀種類 / ゆかり / 奥義色(赤,黄,青) / 奥義lv1説明文 / 1lv[体力,攻撃] / 2lv / 3lv ...
     素材           : 分類 / 名前 / 入手方法
     合成レシピ     : 名前 / 必要素材,個数（[木の枝,1][丸太,1] の形）
 
@@ -33,6 +33,10 @@ def text(value):
 
 
 def find_column(headers, keyword):
+    # 見出しが完全に一致する列を優先し、なければ keyword を含む列を探す
+    #（「刀剣男士」で「刀剣男士番号」の列を拾わないように）
+    if keyword in headers:
+        return headers.index(keyword)
     for i, h in enumerate(headers):
         if keyword in h:
             return i
@@ -55,7 +59,7 @@ def read_characters(ws):
     rows = list(ws.iter_rows(values_only=True))
     headers = [text(h) for h in rows[0]]
     col = {
-        'no': find_column(headers, '刀図鑑'),
+        'no': find_column(headers, '番号'),
         'base': find_column(headers, '刀剣男士'),
         'costume': find_column(headers, '衣装'),
         'rare': find_column(headers, 'レア'),
