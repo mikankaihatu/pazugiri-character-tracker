@@ -35,10 +35,12 @@
 ### 更新の手順
 
 1. `data/master.xlsx` を編集して保存します。
-2. リポジトリのフォルダで変換スクリプトを実行します（初回だけ `pip install openpyxl` が必要です）。
+2. リポジトリのフォルダで変換スクリプトを実行します。
    ```bash
-   python tools/convert_master.py
+   python3 -m pip install openpyxl   # 初回だけ
+   python3 tools/convert_master.py
    ```
+   Windows の場合は `python3` を `python` に読み替えてください。
 3. `js/master/characters.js` と `js/master/materials.js` が作り直されます。Excel と一緒にコミットしてください。
 
 ### 書き方のルール

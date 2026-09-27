@@ -1,8 +1,8 @@
 """data/master.xlsx から js/master/characters.js と js/master/materials.js を作り直す。
 
 使い方（リポジトリのフォルダで実行）:
-    pip install openpyxl
-    python tools/convert_master.py
+    python3 -m pip install openpyxl
+    python3 tools/convert_master.py
 
 Excel のシート:
     キャラクター名 : 刀剣男士番号 / 刀剣男士 / 衣装 / レア / 刀種類 / ゆかり / 奥義色(赤,黄,青) / 奥義lv1説明文 / 1lv[体力,攻撃] / 2lv / 3lv ...
@@ -21,7 +21,7 @@ from pathlib import Path
 try:
     import openpyxl
 except ImportError:
-    sys.exit('openpyxl が入っていません。先に「pip install openpyxl」を実行してください。')
+    sys.exit('openpyxl が入っていません。先に「python3 -m pip install openpyxl」を実行してください。')
 
 ROOT = Path(__file__).resolve().parent.parent
 XLSX = ROOT / 'data' / 'master.xlsx'
