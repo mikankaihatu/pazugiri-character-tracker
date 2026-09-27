@@ -8,9 +8,9 @@ Excel のシート:
     キャラクター名 : 刀剣男士番号 / 刀剣男士 / 衣装 / レア / 刀種類 / ゆかり / 奥義色 / 奥義数値 /
                      奥義lv1説明文 … 奥義lv5説明文 / 1lv[体力,攻撃] … 30lv[体力,攻撃] /
                      上限突破10→20 / 上限突破20→30 / 上限突破30→35（お花3,葉っぱ2 または [お花,3][葉っぱ,2] の形。列を足せば 35→40 なども読める）
-    素材           : 分類 / 名前 / 入手方法
+    素材           : 分類 / 名前 / 入手方法 / 効果
     合成レシピ     : 名前 / 必要素材,個数（[木の枝,1][丸太,1] または 木の枝1,丸太1 の形）
-    ステージドロップ品 : ステージ名 / 落ちる品 / 落ちる品 / …（見出し行なし。1行に1ステージ）
+    ステージドロップ品 : ステージ名 / 有利刀種 / ドロップ品 / ドロップ品 / …（1行に1ステージ。有利刀種は「太刀,打刀」のように複数可）
                          素材シートにない品は「[絵馬]塩おにぎり」のように [種類] を先頭につける
 
 刀剣男士が空の行は読み飛ばす。レアの列は、何か書いてあればレアとして扱う（○ など）。
@@ -182,6 +182,9 @@ def read_materials(ws_materials, ws_recipes):
         if not name:
             continue
         material = {'name': name, 'category': text(row[0]), 'source': text(row[2])}
+        effect = text(row[3]) if len(row) > 3 else ''
+        if effect:
+            material['effect'] = effect
         if recipes.get(name):
             material['recipe'] = recipes[name]
         elif material['source'] == '合成':
@@ -191,20 +194,32 @@ def read_materials(ws_materials, ws_recipes):
 
 
 def read_stages(ws):
+    rows = list(ws.iter_rows(values_only=True))
+    # 見出し行（ステージ名 / 有利刀種 / ドロップ品 …）があれば、それで列を決める
+    advantage_col, drops_from = None, 1
+    if rows and text(rows[0][0]).startswith('ステージ'):
+        headers = [text(h) for h in rows[0]]
+        advantage_col = next((i for i, h in enumerate(headers) if '有利' in h), None)
+        drops_from = next((i for i, h in enumerate(headers) if 'ドロップ' in h), 1)
+        rows = rows[1:]
     stages = []
-    for row_number, row in enumerate(ws.iter_rows(values_only=True), start=1):
+    for row in rows:
         name = text(row[0]) if row else ''
-        if not name or name == 'ステージ':
+        if not name:
             continue
         drops = []
-        for value in row[1:]:
+        for value in row[drops_from:]:
             item = text(value)
             if not item:
                 continue
             # 「[絵馬]塩おにぎり」→ 種類「絵馬」の「塩おにぎり」（素材ではない品）
             m = re.fullmatch(r'[\[［]([^\]］]+)[\]］]\s*(.+)', item)
             drops.append({'name': m.group(2).strip(), 'kind': m.group(1).strip()} if m else {'name': item})
-        stages.append({'name': name, 'drops': drops})
+        stage = {'name': name}
+        if advantage_col is not None:
+            stage['advantage'] = split_list(row[advantage_col])
+        stage['drops'] = drops
+        stages.append(stage)
     return stages
 
 
@@ -222,6 +237,25 @@ def main():
     materials = read_materials(wb['素材'], wb['合成レシピ'])
     categories = list(dict.fromkeys(m['category'] for m in materials))
     stages = read_stages(wb['ステージドロップ品']) if 'ステージドロップ品' in wb.sheetnames else []
+
+    # 素材シートにない名前（合成レシピ・上限突破・ステージドロップ品で使われているもの）
+    known = {m['name'] for m in materials}
+    missing = {}
+    for m in materials:
+        for src in m.get('recipe', {}):
+            missing.setdefault(src, []).append(f'合成レシピ「{m["name"]}」')
+    for c in characters:
+        for lb in c['limitBreaks']:
+            for src in lb['materials']:
+                missing.setdefault(src, []).append(f'{c["base"]} 上限突破{lb["from"]}→{lb["to"]}')
+    for st in stages:
+        for d in st['drops']:
+            if 'kind' not in d:
+                missing.setdefault(d['name'], []).append(f'ステージ{st["name"]}')
+    for name, places in missing.items():
+        if name not in known:
+            used = '、'.join(dict.fromkeys(places))
+            warnings.append(f'「{name}」が素材シートにありません（使っているところ：{used}）')
 
     (OUT_DIR / 'characters.js').write_text(
         '// ===== キャラの固定データ =====\n' + HEADER
@@ -245,7 +279,7 @@ def main():
         for n in notes:
             print('  - ' + n)
     if warnings:
-        print(f'\n確認してほしいところが {len(warnings)} 件あります（この値は読み飛ばしました）:')
+        print(f'\n確認してほしいところが {len(warnings)} 件あります:')
         for w in warnings:
             print('  - ' + w)
 

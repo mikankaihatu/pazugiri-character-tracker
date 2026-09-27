@@ -13,6 +13,14 @@ function selectDropChapter(chapter) {
     renderDrops();
 }
 
+// ステージの有利刀種（Excel の「有利刀種」列）
+function renderAdvantage(stage) {
+    const master = STAGES.find(s => s.name === stage);
+    const types = (master && master.advantage) || [];
+    if (types.length === 0) return '';
+    return `<div class="hint" style="margin-bottom: 10px;">有利刀種：${types.map(t => `<span class="chip" style="padding: 1px 8px; margin-right: 4px;">⚔️ ${escapeHtml(t)}</span>`).join('')}</div>`;
+}
+
 function selectDropStage(stage) {
     selectedDropStage = stage;
     renderDrops();
@@ -96,6 +104,7 @@ function renderDrops() {
                     ${chapterStages.map(s => `<option value="${escapeHtml(s)}" ${s === selectedDropStage ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('')}
                 </select>
             </div>
+            ${renderAdvantage(selectedDropStage)}
             <div class="input-wrapper" style="gap: 12px; margin-bottom: 12px;">
                 ${dropsFor(selectedDropStage).map((m, i) => `
                     <span class="input-wrapper"><label>${escapeHtml(dropLabel(selectedDropStage, m))}</label>
@@ -125,6 +134,7 @@ function renderDrops() {
             const materials = [...new Set([...dropsFor(stage), ...Object.keys(s.totals)])];
             html += `<div class="card">
                 <div class="card-title">${escapeHtml(stage)}</div>
+                ${renderAdvantage(stage)}
                 <div class="stat-row"><span>周回数</span><span class="stat-value">${s.runs}</span></div>
                 <table class="stat-table">
                     <tr><th>品</th><th>合計</th><th>1周平均</th><th>ドロップ率</th></tr>

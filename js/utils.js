@@ -34,6 +34,11 @@ function recipeOf(material) {
     return master && master.recipe && Object.keys(master.recipe).length > 0 ? master.recipe : null;
 }
 
+function effectOf(material) {
+    const master = MATERIALS.find(m => m.name === material);
+    return (master && master.effect) || '';
+}
+
 function getCount(material) {
     return data.inventory[material] || 0;
 }
