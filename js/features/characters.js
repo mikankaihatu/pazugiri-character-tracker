@@ -1,6 +1,6 @@
 // ===== キャラ一覧タブ =====
 // キャラの一覧（刀剣男士・衣装・刀種・ゆかり・奥義など）は data/master.xlsx → js/master/characters.js で管理する。
-// ここで編集するのは、所持・強化待ち・限界突破・信頼度の育成状況だけ
+// ここで編集するのは、所持・強化待ち・レベル上限・信頼度の育成状況だけ
 
 const SECRET_COLORS = {
     '赤': { icon: '🔴', bg: '#ffebee' },
@@ -18,7 +18,7 @@ let filters = {
     swordType: '',
     yukari: '',
     needsUpgrade: false,
-    breakthrough: '',
+    levelCap: '',
     trustLevel: '',
     secretColor: ''
 };
@@ -32,7 +32,7 @@ function matchesFilter(char) {
     if (filters.swordType && char.swordType !== filters.swordType) return false;
     if (filters.yukari && !yukariOf(char).includes(filters.yukari)) return false;
     if (filters.needsUpgrade && !p.needsUpgrade) return false;
-    if (filters.breakthrough !== '' && p.breakthrough !== parseInt(filters.breakthrough)) return false;
+    if (filters.levelCap !== '' && p.levelCap !== parseInt(filters.levelCap)) return false;
     if (filters.trustLevel !== '' && p.trustLevel < parseInt(filters.trustLevel)) return false;
     if (filters.secretColor && char.secretColor !== filters.secretColor) return false;
     return true;
@@ -45,14 +45,14 @@ function applyFilters() {
     filters.swordType = document.getElementById('filter-swordType').value;
     filters.yukari = document.getElementById('filter-yukari').value;
     filters.needsUpgrade = document.getElementById('filter-needsUpgrade').checked;
-    filters.breakthrough = document.getElementById('filter-breakthrough').value;
+    filters.levelCap = document.getElementById('filter-levelCap').value;
     filters.trustLevel = document.getElementById('filter-trustLevel').value;
     filters.secretColor = document.getElementById('filter-secretColor').value;
     renderCharacters();
 }
 
 function clearFilters() {
-    filters = { keyword: '', owned: '', costume: '', swordType: '', yukari: '', needsUpgrade: false, breakthrough: '', trustLevel: '', secretColor: '' };
+    filters = { keyword: '', owned: '', costume: '', swordType: '', yukari: '', needsUpgrade: false, levelCap: '', trustLevel: '', secretColor: '' };
     renderCharacters();
 }
 
@@ -87,12 +87,6 @@ function showCharEditDialog(name) {
             <label style="display: block; font-size: 12px; margin-bottom: 4px; color: #666;">レベル上限</label>
             <select id="edit-levelCap" style="width: 100%;">
                 ${levelCapOptions().map(n => `<option value="${n}" ${p.levelCap === n ? 'selected' : ''}>Lv${n}</option>`).join('')}
-            </select>
-        </div>
-        <div style="margin-bottom: 12px;">
-            <label style="display: block; font-size: 12px; margin-bottom: 4px; color: #666;">限界突破</label>
-            <select id="edit-breakthrough" style="width: 100%;">
-                ${[0, 1, 2, 3, 4, 5, 6].map(n => `<option value="${n}" ${p.breakthrough === n ? 'selected' : ''}>${n === 0 ? 'なし' : '限界突破' + n}</option>`).join('')}
             </select>
         </div>
         <div style="margin-bottom: 16px;">
@@ -139,7 +133,6 @@ function saveCharProgress(name) {
     setProgress(name, {
         owned: document.getElementById('edit-owned').checked,
         needsUpgrade: document.getElementById('edit-needsUpgrade').checked,
-        breakthrough: parseInt(document.getElementById('edit-breakthrough').value) || 0,
         trustLevel: Math.min(MAX_TRUST_LEVEL, toCount(document.getElementById('edit-trustLevel').value)),
         levelCap: parseInt(document.getElementById('edit-levelCap').value) || 10
     });
@@ -184,9 +177,9 @@ function renderCharFilters() {
                 </select>
             </div>
             <div>
-                <label class="filter-label">限界突破</label>
-                <select id="filter-breakthrough" style="width: 100%; font-size: 12px;" onchange="applyFilters()">
-                    ${option('', 'すべて', filters.breakthrough)}${[0, 1, 2, 3, 4, 5, 6].map(n => option(n, n === 0 ? 'なし' : n, filters.breakthrough)).join('')}
+                <label class="filter-label">レベル上限</label>
+                <select id="filter-levelCap" style="width: 100%; font-size: 12px;" onchange="applyFilters()">
+                    ${option('', 'すべて', filters.levelCap)}${levelCapOptions().map(n => option(n, `Lv${n}`, filters.levelCap)).join('')}
                 </select>
             </div>
             <div>
@@ -221,7 +214,6 @@ function renderCharCard(char) {
                     ${yukariOf(char).map(y => badge('#e8f5e9', `🔗 ${escapeHtml(y)}`)).join('')}
                     ${color ? badge(color.bg, color.icon) : ''}
                     ${p.needsUpgrade ? badge('#fff3e0', '🔧 強化待ち') : ''}
-                    ${p.breakthrough > 0 ? badge('#f3e5f5', `⭐ 限界${p.breakthrough}`) : ''}
                     ${p.levelCap > 10 ? badge('#e0f2f1', `🔓 Lv上限${p.levelCap}`) : ''}
                     ${p.trustLevel > 0 ? badge('#f0f4c3', `💖 ${p.trustLevel}`) : ''}
                 </div>

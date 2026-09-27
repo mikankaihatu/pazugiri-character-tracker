@@ -3,7 +3,7 @@
 
 // ===== データ構造 =====
 const INITIAL_DATA = {
-    characterProgress: {},   // { キャラ名: { owned, needsUpgrade, breakthrough, trustLevel, levelCap } }
+    characterProgress: {},   // { キャラ名: { owned, needsUpgrade, trustLevel, levelCap } }
     characterLevelUps: {},   // { キャラ名: { 素材名: 必要数 } }
     levelUpTargets: {},      // { キャラ名: 上限突破後のレベル上限 }（上限突破の素材をセットしたとき）
     inventory: {},           // { 素材名: 所持数 }
@@ -25,7 +25,7 @@ function validateData(savedData) {
             savedData.characterProgress[c.name] = {
                 owned: true,
                 needsUpgrade: !!c.needsUpgrade,
-                breakthrough: c.breakthrough || 0,
+                breakthrough: c.breakthrough || 0,   // 下でレベル上限に変換する
                 trustLevel: c.trustLevel || 0
             };
             if (savedData.characterLevelUps[c.id]) {
@@ -35,6 +35,12 @@ function validateData(savedData) {
         });
         delete savedData.characters;
     }
+    // 「限界突破（0〜6）」はレベル上限（上限突破）に一本化した：0→Lv10、1→Lv20、2→Lv30、3以上→Lv35
+    Object.values(savedData.characterProgress).forEach(p => {
+        if (p.breakthrough === undefined) return;
+        if (p.levelCap === undefined) p.levelCap = [10, 20, 30, 35][Math.min(p.breakthrough || 0, 3)];
+        delete p.breakthrough;
+    });
     // 素材の分類と合成レシピは js/master/materials.js に移った
     delete savedData.materialCategories;
     delete savedData.recipes;

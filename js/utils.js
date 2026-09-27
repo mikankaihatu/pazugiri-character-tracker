@@ -92,7 +92,7 @@ function yukariOf(char) {
 const MAX_TRUST_LEVEL = 10;
 
 function getProgress(name) {
-    return { owned: false, needsUpgrade: false, breakthrough: 0, trustLevel: 0, levelCap: 10, ...data.characterProgress[name] };
+    return { owned: false, needsUpgrade: false, trustLevel: 0, levelCap: 10, ...data.characterProgress[name] };
 }
 
 // ===== レベル上限（上限突破） =====
