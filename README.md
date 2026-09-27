@@ -1,1 +1,1 @@
-# toukennrannbu_pazugiri
+# pazugiri-character-tracker
