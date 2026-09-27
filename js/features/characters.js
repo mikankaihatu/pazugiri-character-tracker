@@ -114,7 +114,16 @@ function renderExpStatus(name) {
     if (toNext !== null) lines.push(`次のレベルまで あと <span class="stat-value">${toNext.toLocaleString()}</span>`);
     if (toCap !== null) lines.push(`Lv${levelCap}まで あと <span class="stat-value">${toCap.toLocaleString()}</span>`);
     if (lines.length === 0) return '';
-    return `<div class="hint" style="margin: 6px 0 0;">${lines.join('　')}${entered ? '' : '<br>（経験値を入れていないので、今のレベルになったばかりとして計算しています）'}</div>`;
+    const extra = [];
+    if (toCap !== null && toCap > 0 && expBooks().length > 0) {
+        const books = Object.entries(booksFor(toCap)).map(([b, n]) => `${escapeHtml(b.replace(/^経験値の書・/, ''))}×${n}`).join('・');
+        const owned = ownedBookExp();
+        extra.push(`<br>Lv${levelCap}までの経験値の書：${books}`);
+        extra.push(`<br>所持している経験値の書：経験値 ${owned.toLocaleString()} 分 ${owned >= toCap
+            ? '<span class="enough">（足りています）</span>'
+            : `<span class="shortage">（あと ${(toCap - owned).toLocaleString()} 足りません）</span>`}`);
+    }
+    return `<div class="hint" style="margin: 6px 0 0;">${lines.join('　')}${extra.join('')}${entered ? '' : '<br>（経験値を入れていないので、今のレベルになったばかりとして計算しています）'}</div>`;
 }
 
 // 足りていない情報があれば、情報提供フォームへのリンクを出す

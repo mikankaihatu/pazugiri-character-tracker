@@ -6,7 +6,7 @@ const CHARACTERS = [
     {"no": 3, "name": "三日月宗近-戦装束", "base": "三日月宗近", "costume": "戦装束", "rarity": "通常", "swordType": "太刀", "yukari": [], "secretColor": "", "skillValue": "", "skillName": "", "skills": {}, "levels": {}, "limitBreaks": []},
     {"no": 3, "name": "三日月宗近-戦装束-レア", "base": "三日月宗近", "costume": "戦装束", "rarity": "レア", "swordType": "太刀", "yukari": ["夜", "天下五剣"], "secretColor": "赤", "skillValue": 22, "skillName": "月明かりの冴え", "skills": {"1": "【すべて】のト餓鬼を消去し、敵に【特小++】ダメージを与える"}, "levels": {"13": [1060, 140]}, "limitBreaks": []},
     {"no": 5, "name": "小狐丸-戦装束", "base": "小狐丸", "costume": "戦装束", "rarity": "通常", "swordType": "太刀", "yukari": ["けもの"], "secretColor": "赤", "skillValue": 27, "skillName": "ボム練成の術 三の火", "skills": {"1": "ボムを【3個】生成する"}, "levels": {"5": [740, 77]}, "limitBreaks": []},
-    {"no": 7, "name": "石切丸-戦装束", "base": "石切丸", "costume": "戦装束", "rarity": "通常", "swordType": "大太刀", "yukari": ["ご神刀"], "secretColor": "青", "skillValue": 22, "skillName": "逆さ扇斬り 守護の型", "skills": {"1": "【扇型・中範囲】のト餓鬼を消去し、敵に【特小－】ダメージを与える。\n味方全員に被ダメージ軽減【極小＋・3手】を付与する"}, "levels": {"1": [561, 61]}, "limitBreaks": []},
+    {"no": 7, "name": "石切丸-戦装束", "base": "石切丸", "costume": "戦装束", "rarity": "通常", "swordType": "大太刀", "yukari": ["ご神刀"], "secretColor": "青", "skillValue": 22, "skillName": "逆さ扇斬り 守護の型", "skills": {"1": "【扇型・中範囲】のト餓鬼を消去し、敵に【特小－】ダメージを与える。\n味方全員に被ダメージ軽減【極小＋・3手】を付与する"}, "levels": {"1": [561, 61], "4": [700, 76], "8": [886, 96], "10": [979, 106]}, "limitBreaks": []},
     {"no": 9, "name": "岩融-戦装束", "base": "岩融", "costume": "戦装束", "rarity": "通常", "swordType": "薙刀", "yukari": ["源氏"], "secretColor": "青", "skillValue": 16, "skillName": "大薙ぎ払い・赤", "skills": {"1": "【最大10体】の赤ト餓鬼を盤面の右下に集める"}, "levels": {"1": [471, 69]}, "limitBreaks": []},
     {"no": 23, "name": "鳴狐-戦装束", "base": "鳴狐", "costume": "戦装束", "rarity": "通常", "swordType": "打刀", "yukari": ["けもの"], "secretColor": "赤", "skillValue": 21, "skillName": "ボム練成の術 二の火", "skills": {"1": "ボムを【2個】生成する"}, "levels": {"28": [1505, 223], "29": [1543, 229]}, "limitBreaks": []},
     {"no": 25, "name": "一期一振-戦装束", "base": "一期一振", "costume": "戦装束", "rarity": "通常", "swordType": "太刀", "yukari": ["兄弟"], "secretColor": "黄", "skillValue": 22, "skillName": "水平一刀斬り", "skills": {"1": "【横列・小範囲】のト餓鬼を消去し、敵に【特小＋＋】ダメージを与える"}, "levels": {"11": [1050, 108]}, "limitBreaks": []},
@@ -32,4 +32,4 @@ const CHARACTERS = [
 
 // 経験値表（全キャラ共通・レアも同じ）
 // { レベル: そのレベルから次のレベルに上がるのに必要な累計経験値（ゲーム画面の「/」の右の数） }
-const EXP_TABLE = {"1": 9, "5": 441, "6": 683, "11": 2928, "13": 4373, "16": 7198, "23": 17199, "24": 19049, "29": 30000};
+const EXP_TABLE = {"1": 9, "4": 258, "5": 441, "6": 683, "8": 1363, "9": 1809, "11": 2928, "13": 4373, "16": 7198, "23": 17199, "24": 19049, "29": 30000};

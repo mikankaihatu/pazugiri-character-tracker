@@ -220,6 +220,9 @@ def read_materials(ws_materials, ws_recipes):
         effect = text(row[3]) if len(row) > 3 else ''
         if effect:
             material['effect'] = effect
+            # 効果が「経験値+150」なら、使うと増える経験値として読む（経験値の書）
+            if m := re.search(r'経験値\s*[+＋]\s*([\d０-９,，]+)', effect):
+                material['exp'] = int(re.sub(r'[,，]', '', unicodedata.normalize('NFKC', m.group(1))))
         if recipes.get(name):
             material['recipe'] = recipes[name]
         elif material['source'] == '合成':

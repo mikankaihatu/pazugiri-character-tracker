@@ -202,6 +202,38 @@ function expStatus(name) {
     return { current, entered: fits, toNext: left(next), toCap: left(expThreshold(levelCap)) };
 }
 
+// 経験値の書（素材シートの効果が「経験値+150」の品）。経験値の多い順
+function expBooks() {
+    return MATERIALS.filter(m => m.exp > 0).sort((a, b) => b.exp - a.exp);
+}
+
+// amount の経験値をためるのに使う経験値の書の数 { 書の名前: 冊数 }
+// 多い書から使い、端数は一番少ない書で埋める（少ない書を何冊も使うより上の書1冊ですむなら上の書にする）
+function booksFor(amount) {
+    const books = expBooks();
+    const counts = books.map(() => 0);
+    let rest = amount;
+    books.forEach((b, i) => {
+        const last = i === books.length - 1;
+        counts[i] = last ? Math.ceil(Math.max(0, rest) / b.exp) : Math.floor(rest / b.exp);
+        rest -= counts[i] * b.exp;
+    });
+    for (let i = books.length - 1; i > 0; i--) {
+        if (counts[i] * books[i].exp >= books[i - 1].exp) {
+            counts[i - 1] += 1;
+            counts[i] = 0;
+        }
+    }
+    const result = {};
+    books.forEach((b, i) => { if (counts[i] > 0) result[b.name] = counts[i]; });
+    return result;
+}
+
+// 在庫にある経験値の書の経験値の合計
+function ownedBookExp() {
+    return expBooks().reduce((sum, b) => sum + getCount(b.name) * b.exp, 0);
+}
+
 function setProgress(name, changes) {
     data.characterProgress[name] = { ...getProgress(name), ...changes };
     saveData();
