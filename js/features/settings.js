@@ -78,7 +78,7 @@ function renderSettings() {
     // ステージ
     let html = `<div class="settings-section">
         <div class="settings-title">ステージ</div>
-        <div class="hint">チェックした素材が、ドロップ統計タブの入力欄に出ます（未チェックならドロップ素材をすべて表示）。</div>
+        <div class="hint">チェックした素材が、ドロップ統計タブの入力欄に出ます（未チェックなら、入手方法がドロップの素材をすべて表示）。</div>
         <div class="add-material">
             <input type="text" id="newStage" placeholder="ステージ名（1-1 など）">
             <button onclick="addStage()">追加</button>

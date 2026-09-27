@@ -1,16 +1,20 @@
 // ===== キャラ一覧タブ =====
-// キャラの一覧（名前・刀種・奥義色など）は js/master/characters.js で管理する。
+// キャラの一覧（名前・刀種・ゆかり・奥義など）は data/master.xlsx → js/master/characters.js で管理する。
 // ここで編集するのは、所持・強化待ち・限界突破・信頼度の育成状況だけ
 
 const SECRET_COLORS = {
-    red: { icon: '🔴', label: '赤', bg: '#ffebee', border: '#d32f2f' },
-    blue: { icon: '🔵', label: '青', bg: '#e3f2fd', border: '#1976d2' },
-    yellow: { icon: '🟡', label: '黄', bg: '#fffde7', border: '#f9a825' }
+    '赤': { icon: '🔴', bg: '#ffebee' },
+    '青': { icon: '🔵', bg: '#e3f2fd' },
+    '黄': { icon: '🟡', bg: '#fffde7' }
 };
+
+// 一覧の見出しの並び順（ここにない分類は後ろに並ぶ）
+const RARITY_ORDER = ['レア', '通常'];
 
 let filters = {
     owned: '',
     swordType: '',
+    yukari: '',
     needsUpgrade: false,
     breakthrough: '',
     trustLevel: '',
@@ -22,6 +26,7 @@ function matchesFilter(char) {
     if (filters.owned === 'owned' && !p.owned) return false;
     if (filters.owned === 'notOwned' && p.owned) return false;
     if (filters.swordType && char.swordType !== filters.swordType) return false;
+    if (filters.yukari && char.yukari !== filters.yukari) return false;
     if (filters.needsUpgrade && !p.needsUpgrade) return false;
     if (filters.breakthrough !== '' && p.breakthrough !== parseInt(filters.breakthrough)) return false;
     if (filters.trustLevel !== '' && p.trustLevel < parseInt(filters.trustLevel)) return false;
@@ -32,6 +37,7 @@ function matchesFilter(char) {
 function applyFilters() {
     filters.owned = document.getElementById('filter-owned').value;
     filters.swordType = document.getElementById('filter-swordType').value;
+    filters.yukari = document.getElementById('filter-yukari').value;
     filters.needsUpgrade = document.getElementById('filter-needsUpgrade').checked;
     filters.breakthrough = document.getElementById('filter-breakthrough').value;
     filters.trustLevel = document.getElementById('filter-trustLevel').value;
@@ -40,7 +46,7 @@ function applyFilters() {
 }
 
 function clearFilters() {
-    filters = { owned: '', swordType: '', needsUpgrade: false, breakthrough: '', trustLevel: '', secretColor: '' };
+    filters = { owned: '', swordType: '', yukari: '', needsUpgrade: false, breakthrough: '', trustLevel: '', secretColor: '' };
     renderCharacters();
 }
 
@@ -62,7 +68,9 @@ function showCharEditDialog(name) {
     modal.id = 'charEditModal';
     modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 16px;';
     modal.innerHTML = `<div style="background: white; border-radius: 8px; padding: 24px; width: 100%; max-width: 400px; max-height: 80vh; overflow-y: auto;">
-        <div style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #333;">${escapeHtml(name)} - 育成状況</div>
+        <div style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #333;">${escapeHtml(name)}</div>
+        ${renderCharInfo(char)}
+        <div class="sub-title" style="margin-top: 16px;">育成状況</div>
         <div style="margin-bottom: 12px;">
             <label><input type="checkbox" id="edit-owned" ${p.owned ? 'checked' : ''} style="margin-right: 8px;">所持している</label>
         </div>
@@ -87,6 +95,24 @@ function showCharEditDialog(name) {
     document.body.appendChild(modal);
 }
 
+// 固定データ（刀図鑑・刀種・ゆかり・奥義・レベルごとの能力）
+function renderCharInfo(char) {
+    const color = SECRET_COLORS[char.secretColor];
+    const row = (label, value) => `<div class="stat-row"><span>${label}</span><span class="stat-value">${value || '―'}</span></div>`;
+    const levels = char.levels || [];
+    return `<div style="background: #f9f9f9; border-radius: 6px; padding: 12px;">
+        ${row('刀図鑑', char.no !== undefined && char.no !== '' ? `No.${escapeHtml(char.no)}` : '')}
+        ${row('刀種', escapeHtml(char.swordType || ''))}
+        ${row('ゆかり', escapeHtml(char.yukari || ''))}
+        ${row('奥義色', color ? `${color.icon} ${escapeHtml(char.secretColor)}` : '')}
+        ${char.skill ? `<div style="font-size: 12px; color: #666; margin: 8px 0;">奥義：${escapeHtml(char.skill)}</div>` : ''}
+        ${levels.length > 0 ? `<table class="stat-table">
+            <tr><th>Lv</th><th>体力</th><th>攻撃</th></tr>
+            ${levels.map(([hp, atk], i) => `<tr><td>${i + 1}</td><td>${hp}</td><td>${atk}</td></tr>`).join('')}
+        </table>` : ''}
+    </div>`;
+}
+
 function saveCharProgress(name) {
     setProgress(name, {
         owned: document.getElementById('edit-owned').checked,
@@ -100,6 +126,7 @@ function saveCharProgress(name) {
 
 function renderCharFilters() {
     const swordTypes = [...new Set(allCharacters().map(c => c.swordType).filter(Boolean))];
+    const yukaris = [...new Set(allCharacters().map(c => c.yukari).filter(Boolean))];
     const option = (value, label, current) => `<option value="${escapeHtml(value)}" ${String(current) === String(value) ? 'selected' : ''}>${escapeHtml(label)}</option>`;
     return `<div style="background: #f9f9f9; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
         <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px; color: #333;">フィルター</div>
@@ -117,6 +144,12 @@ function renderCharFilters() {
                 </select>
             </div>
             <div>
+                <label class="filter-label">ゆかり</label>
+                <select id="filter-yukari" style="width: 100%; font-size: 12px;" onchange="applyFilters()">
+                    ${option('', 'すべて', filters.yukari)}${yukaris.map(y => option(y, y, filters.yukari)).join('')}
+                </select>
+            </div>
+            <div>
                 <label class="filter-label">限界突破</label>
                 <select id="filter-breakthrough" style="width: 100%; font-size: 12px;" onchange="applyFilters()">
                     ${option('', 'すべて', filters.breakthrough)}${[0, 1, 2, 3, 4, 5, 6].map(n => option(n, n === 0 ? 'なし' : n, filters.breakthrough)).join('')}
@@ -125,7 +158,7 @@ function renderCharFilters() {
             <div>
                 <label class="filter-label">奥義色</label>
                 <select id="filter-secretColor" style="width: 100%; font-size: 12px;" onchange="applyFilters()">
-                    ${option('', 'すべて', filters.secretColor)}${Object.entries(SECRET_COLORS).map(([k, c]) => option(k, `${c.icon} ${c.label}`, filters.secretColor)).join('')}
+                    ${option('', 'すべて', filters.secretColor)}${Object.entries(SECRET_COLORS).map(([k, c]) => option(k, `${c.icon} ${k}`, filters.secretColor)).join('')}
                 </select>
             </div>
             <div>
@@ -147,9 +180,10 @@ function renderCharCard(char) {
     return `<div class="card" style="${p.owned ? '' : 'opacity: 0.5;'}">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 8px;">
             <div style="flex: 1;">
-                <div class="card-title" style="margin-bottom: 8px;">${escapeHtml(char.name)}</div>
+                <div class="card-title" style="margin-bottom: 8px;">${char.no !== undefined && char.no !== '' ? `<span style="color: #999; font-weight: 400; font-size: 12px; margin-right: 4px;">No.${escapeHtml(char.no)}</span>` : ''}${escapeHtml(char.name)}</div>
                 <div style="font-size: 11px; color: #666; display: flex; gap: 4px; flex-wrap: wrap;">
                     ${char.swordType ? badge('#e3f2fd', `⚔️ ${escapeHtml(char.swordType)}`) : ''}
+                    ${char.yukari ? badge('#e8f5e9', `🔗 ${escapeHtml(char.yukari)}`) : ''}
                     ${color ? badge(color.bg, color.icon) : ''}
                     ${p.needsUpgrade ? badge('#fff3e0', '🔧 強化待ち') : ''}
                     ${p.breakthrough > 0 ? badge('#f3e5f5', `⭐ 限界${p.breakthrough}`) : ''}
@@ -175,9 +209,13 @@ function renderCharacters() {
         html += `<div class="hint">所持 ${ownedCount} / ${chars.length}</div>`;
     }
 
-    const rarities = [...new Set(chars.map(c => c.rarity || 'その他'))];
+    const rarities = [...new Set(chars.map(c => c.rarity || 'その他'))].sort((a, b) => {
+        const ia = RARITY_ORDER.indexOf(a), ib = RARITY_ORDER.indexOf(b);
+        return (ia < 0 ? RARITY_ORDER.length : ia) - (ib < 0 ? RARITY_ORDER.length : ib);
+    });
     rarities.forEach((rarity, i) => {
-        const list = chars.filter(c => (c.rarity || 'その他') === rarity && matchesFilter(c));
+        const list = chars.filter(c => (c.rarity || 'その他') === rarity && matchesFilter(c))
+            .sort((a, b) => (Number(a.no) || 0) - (Number(b.no) || 0));
         html += `<div class="rarity-section"><div class="rarity-title ${i > 0 ? 'unrevealed' : ''}">${escapeHtml(rarity)}</div>`;
         if (list.length === 0) {
             html += '<div class="empty">条件に合うキャラがありません</div>';

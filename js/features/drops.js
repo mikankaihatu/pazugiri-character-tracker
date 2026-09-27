@@ -3,10 +3,10 @@
 
 let selectedDropStage = '';
 
-// ステージで入力する素材（設定タブで未指定ならドロップ素材すべて）
+// ステージで入力する素材（設定タブで未指定なら、入手方法がドロップの素材すべて）
 function dropMaterialsFor(stage) {
     const listed = data.stageDrops[stage] || [];
-    return listed.length > 0 ? listed : materialsInCategory('ドロップ素材');
+    return listed.length > 0 ? listed : dropMaterials();
 }
 
 function selectDropStage(stage) {

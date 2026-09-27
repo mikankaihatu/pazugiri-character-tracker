@@ -1,11 +1,10 @@
 // ===== キャラの固定データ =====
-// キャラを増やすときは、CHARACTERS に 1 行追加する。
-//   name        : キャラ名（重ならない名前にする。育成状況はこの名前で保存される）
-//   rarity      : 一覧の見出しになる分類（'レア' / 'その他' など。書いた順に並ぶ）
-//   swordType   : 刀種（'打刀' など）
-//   secretColor : 奥義色（'red' / 'blue' / 'yellow'。不明なら書かなくてよい）
-//
-// 例：{ name: 'へし切長谷部', rarity: 'レア', swordType: '打刀', secretColor: 'red' },
+// このファイルは tools/convert_master.py で data/master.xlsx から作っています。
+// 直接書き換えても動きますが、次に変換したときに Excel の内容で上書きされます。
 
 const CHARACTERS = [
+    {"no": 3, "name": "三日月宗近-戦装束", "rarity": "通常", "swordType": "", "yukari": "", "secretColor": "", "skill": "", "levels": []},
+    {"no": 4, "name": "三日月宗近-戦装束-レア", "rarity": "レア", "swordType": "", "yukari": "", "secretColor": "", "skill": "", "levels": []},
+    {"no": 5, "name": "小狐丸-戦装束", "rarity": "通常", "swordType": "", "yukari": "", "secretColor": "", "skill": "", "levels": []},
+    {"no": 7, "name": "石切丸-戦装束", "rarity": "通常", "swordType": "", "yukari": "", "secretColor": "", "skill": "", "levels": []},
 ];

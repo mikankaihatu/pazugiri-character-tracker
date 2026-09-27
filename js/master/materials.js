@@ -1,21 +1,30 @@
 // ===== 素材の固定データ =====
-// 素材を増やすときは、MATERIALS に 1 行追加する。
-//   name     : 素材名（ほかの素材・キャラと重ならない名前にする。在庫などはこの名前で保存される）
-//   category : MATERIAL_CATEGORIES のどれか
-//   recipe   : 合成素材のときだけ。{ 材料の素材名: 1個作るのに必要な数 }
-//
-// 例：{ name: '玉鋼', category: '合成素材', recipe: { '金': 2, '銀': 1 } },
+// このファイルは tools/convert_master.py で data/master.xlsx から作っています。
+// 直接書き換えても動きますが、次に変換したときに Excel の内容で上書きされます。
 
-const MATERIAL_CATEGORIES = ['ドロップ素材', '合成素材', '貴重素材'];
+const MATERIAL_CATEGORIES = ["贈物"];
 
 const MATERIALS = [
-    // ドロップ素材
-    { name: '金', category: 'ドロップ素材' },
-    { name: '銀', category: 'ドロップ素材' },
-    { name: '鋼', category: 'ドロップ素材' },
-    { name: '刀彩', category: 'ドロップ素材' },
-
-    // 合成素材
-
-    // 貴重素材
+    {"name": "お花", "category": "贈物", "source": "ドロップ"},
+    {"name": "葉っぱ", "category": "贈物", "source": "ドロップ"},
+    {"name": "火打ち石", "category": "贈物", "source": "ドロップ"},
+    {"name": "桃", "category": "贈物", "source": "ドロップ"},
+    {"name": "木の枝", "category": "贈物", "source": "ドロップ"},
+    {"name": "卵", "category": "贈物", "source": "ドロップ"},
+    {"name": "お魚", "category": "贈物", "source": "ドロップ"},
+    {"name": "サンゴ", "category": "贈物", "source": "ドロップ"},
+    {"name": "丸太", "category": "贈物", "source": "ドロップ"},
+    {"name": "骨付き肉", "category": "贈物", "source": "ドロップ"},
+    {"name": "粘土", "category": "贈物", "source": "ドロップ"},
+    {"name": "お米", "category": "贈物", "source": "ドロップ"},
+    {"name": "鉄", "category": "贈物", "source": "ドロップ"},
+    {"name": "昆布", "category": "贈物", "source": "ドロップ"},
+    {"name": "ふさふさの毛", "category": "贈物", "source": "ドロップ"},
+    {"name": "麦", "category": "贈物", "source": "ドロップ"},
+    {"name": "塩", "category": "贈物", "source": "ドロップ"},
+    {"name": "サイコロ", "category": "贈物", "source": "ドロップ"},
+    {"name": "油", "category": "贈物", "source": "ドロップ"},
+    {"name": "ネジ", "category": "贈物", "source": "ドロップ"},
+    {"name": "水", "category": "贈物", "source": "ドロップ"},
+    {"name": "紙", "category": "贈物", "source": "合成", "recipe": {"木の枝": 1, "丸太": 1, "水": 1}},
 ];

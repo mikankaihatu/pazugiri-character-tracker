@@ -25,6 +25,11 @@ function allMaterials() {
     return MATERIALS.map(m => m.name);
 }
 
+// 入手方法が「ドロップ」の素材（ドロップ統計の入力欄に出す）
+function dropMaterials() {
+    return MATERIALS.filter(m => m.source === 'ドロップ').map(m => m.name);
+}
+
 function materialsInCategory(category) {
     return MATERIALS.filter(m => m.category === category).map(m => m.name);
 }
@@ -63,6 +68,9 @@ function checkMasterData() {
         if (!MATERIAL_CATEGORIES.includes(m.category)) {
             errors.push(`素材「${m.name}」の category「${m.category}」は MATERIAL_CATEGORIES にありません`);
         }
+        if (m.source === '合成' && !recipeOf(m.name)) {
+            errors.push(`素材「${m.name}」は入手方法が「合成」ですが、合成レシピがありません`);
+        }
         Object.keys(m.recipe || {}).forEach(src => {
             if (!names.includes(src)) errors.push(`素材「${m.name}」のレシピにある「${src}」は素材に登録されていません`);
             if (src === m.name) errors.push(`素材「${m.name}」のレシピに自分自身が入っています`);
@@ -71,9 +79,12 @@ function checkMasterData() {
     const charNames = CHARACTERS.map(c => c.name);
     charNames.filter((n, i) => charNames.indexOf(n) !== i)
         .forEach(n => errors.push(`キャラ「${n}」が2回以上登録されています`));
+    const numbers = CHARACTERS.map(c => c.no).filter(n => n !== undefined && n !== '');
+    numbers.filter((n, i) => numbers.indexOf(n) !== i)
+        .forEach(n => errors.push(`刀図鑑 ${n} 番が2回以上登録されています`));
     CHARACTERS.forEach(c => {
-        if (c.secretColor && !['red', 'blue', 'yellow'].includes(c.secretColor)) {
-            errors.push(`キャラ「${c.name}」の secretColor「${c.secretColor}」は red / blue / yellow のどれかにしてください`);
+        if (c.secretColor && !['赤', '青', '黄'].includes(c.secretColor)) {
+            errors.push(`キャラ「${c.name}」の奥義色「${c.secretColor}」は 赤 / 青 / 黄 のどれかにしてください`);
         }
     });
     return errors;
