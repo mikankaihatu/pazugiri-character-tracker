@@ -25,11 +25,6 @@ function allMaterials() {
     return MATERIALS.map(m => m.name);
 }
 
-// 入手方法が「ドロップ」の素材（ドロップ統計の入力欄に出す）
-function dropMaterials() {
-    return MATERIALS.filter(m => m.source === 'ドロップ').map(m => m.name);
-}
-
 function materialsInCategory(category) {
     return MATERIALS.filter(m => m.category === category).map(m => m.name);
 }
@@ -41,6 +36,24 @@ function recipeOf(material) {
 
 function getCount(material) {
     return data.inventory[material] || 0;
+}
+
+// ===== ステージ =====
+function stageNames() {
+    return STAGES.map(s => s.name);
+}
+
+// ステージで落ちる品の名前（素材以外の品も含む）
+function dropsFor(stage) {
+    const master = STAGES.find(s => s.name === stage);
+    return master ? master.drops.map(d => d.name) : [];
+}
+
+// 画面に出す品の名前：素材以外は「塩おにぎり（絵馬）」
+function dropLabel(stage, item) {
+    const master = STAGES.find(s => s.name === stage);
+    const drop = master && master.drops.find(d => d.name === item);
+    return drop && drop.kind ? `${item}（${drop.kind}）` : item;
 }
 
 // ===== キャラ =====
@@ -90,6 +103,14 @@ function checkMasterData() {
             if (src === m.name) errors.push(`素材「${m.name}」のレシピに自分自身が入っています`);
         });
     });
+    const stages = stageNames();
+    stages.filter((n, i) => stages.indexOf(n) !== i)
+        .forEach(n => errors.push(`ステージ「${n}」が2回以上登録されています`));
+    STAGES.forEach(st => st.drops.forEach(d => {
+        if (!d.kind && !names.includes(d.name)) {
+            errors.push(`ステージ「${st.name}」の「${d.name}」は素材に登録されていません（素材以外なら「[絵馬]${d.name}」のように書いてください）`);
+        }
+    }));
     const charNames = CHARACTERS.map(c => c.name);
     charNames.filter((n, i) => charNames.indexOf(n) !== i)
         .forEach(n => errors.push(`キャラ「${n}」が2回以上登録されています`));

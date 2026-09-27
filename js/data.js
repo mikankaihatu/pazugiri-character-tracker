@@ -5,7 +5,6 @@
 const INITIAL_DATA = {
     characterProgress: {},   // { キャラ名: { owned, needsUpgrade, breakthrough, trustLevel } }
     characterLevelUps: {},   // { キャラ名: { 素材名: 必要数 } }
-    stageDrops: {},          // { ステージ名: [落ちる素材名] }
     inventory: {},           // { 素材名: 所持数 }
     runs: []                 // 周回記録
 };
@@ -14,7 +13,6 @@ const INITIAL_DATA = {
 function validateData(savedData) {
     if (!savedData.characterProgress) savedData.characterProgress = {};
     if (!savedData.characterLevelUps) savedData.characterLevelUps = {};
-    if (!savedData.stageDrops) savedData.stageDrops = {};
     if (!savedData.inventory) savedData.inventory = {};
     if (!Array.isArray(savedData.runs)) savedData.runs = [];
 
@@ -38,6 +36,8 @@ function validateData(savedData) {
     // 素材の分類と合成レシピは js/master/materials.js に移った
     delete savedData.materialCategories;
     delete savedData.recipes;
+    // ステージは js/master/stages.js に移った
+    delete savedData.stageDrops;
 
     return savedData;
 }

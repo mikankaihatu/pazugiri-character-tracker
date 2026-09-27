@@ -9,6 +9,8 @@ Excel のシート:
                      奥義lv1説明文 … 奥義lv5説明文 / 1lv[体力,攻撃] … 30lv[体力,攻撃]
     素材           : 分類 / 名前 / 入手方法
     合成レシピ     : 名前 / 必要素材,個数（[木の枝,1][丸太,1] の形）
+    ステージドロップ品 : ステージ名 / 落ちる品 / 落ちる品 / …（見出し行なし。1行に1ステージ）
+                         素材シートにない品は「[絵馬]塩おにぎり」のように [種類] を先頭につける
 
 刀剣男士が空の行は読み飛ばす。レアの列は、何か書いてあればレアとして扱う（○ など）。
 ゆかりは「夜,天下五剣」のようにカンマ区切りで複数書ける。
@@ -149,6 +151,24 @@ def read_materials(ws_materials, ws_recipes):
     return materials
 
 
+def read_stages(ws):
+    stages = []
+    for row_number, row in enumerate(ws.iter_rows(values_only=True), start=1):
+        name = text(row[0]) if row else ''
+        if not name or name == 'ステージ':
+            continue
+        drops = []
+        for value in row[1:]:
+            item = text(value)
+            if not item:
+                continue
+            # 「[絵馬]塩おにぎり」→ 種類「絵馬」の「塩おにぎり」（素材ではない品）
+            m = re.fullmatch(r'[\[［]([^\]］]+)[\]］]\s*(.+)', item)
+            drops.append({'name': m.group(2).strip(), 'kind': m.group(1).strip()} if m else {'name': item})
+        stages.append({'name': name, 'drops': drops})
+    return stages
+
+
 def js_line(obj):
     return '    ' + json.dumps(obj, ensure_ascii=False) + ','
 
@@ -162,6 +182,7 @@ def main():
     characters = read_characters(wb['キャラクター名'])
     materials = read_materials(wb['素材'], wb['合成レシピ'])
     categories = list(dict.fromkeys(m['category'] for m in materials))
+    stages = read_stages(wb['ステージドロップ品']) if 'ステージドロップ品' in wb.sheetnames else []
 
     (OUT_DIR / 'characters.js').write_text(
         '// ===== キャラの固定データ =====\n' + HEADER
@@ -173,7 +194,13 @@ def main():
         + 'const MATERIALS = [\n' + '\n'.join(js_line(m) for m in materials) + '\n];\n',
         encoding='utf-8')
 
-    print(f'キャラ {len(characters)} 件、素材 {len(materials)} 件を書き出しました')
+    (OUT_DIR / 'stages.js').write_text(
+        '// ===== ステージの固定データ =====\n' + HEADER
+        + '// drops の kind は、素材シートにない品の種類（絵馬 など）\n'
+        + 'const STAGES = [\n' + '\n'.join(js_line(st) for st in stages) + '\n];\n',
+        encoding='utf-8')
+
+    print(f'キャラ {len(characters)} 件、素材 {len(materials)} 件、ステージ {len(stages)} 件を書き出しました')
     if warnings:
         print(f'\n確認してほしいところが {len(warnings)} 件あります（この値は読み飛ばしました）:')
         for w in warnings:

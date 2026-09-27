@@ -1,33 +1,6 @@
 // ===== 設定タブ =====
-// ステージの登録と、データのバックアップ
-// （素材・キャラ・合成レシピは js/master/ で管理する）
-
-// ----- ステージ -----
-function addStage() {
-    const name = document.getElementById('newStage').value.trim();
-    if (!name) return;
-    if (data.stageDrops[name]) {
-        alert('このステージはすでにあります');
-        return;
-    }
-    data.stageDrops[name] = [];
-    saveData();
-    renderSettings();
-}
-
-function deleteStage(name) {
-    if (!confirm(`ステージ「${name}」を削除しますか？\n（周回記録は残ります）`)) return;
-    delete data.stageDrops[name];
-    saveData();
-    renderSettings();
-}
-
-function toggleStageDrop(stage, material, checked) {
-    const drops = data.stageDrops[stage];
-    if (checked && !drops.includes(material)) drops.push(material);
-    if (!checked) data.stageDrops[stage] = drops.filter(m => m !== material);
-    saveData();
-}
+// データのバックアップ
+// （キャラ・素材・合成レシピ・ステージは data/master.xlsx → js/master/ で管理する）
 
 // ----- バックアップ -----
 function exportData() {
@@ -72,38 +45,8 @@ function resetAllData() {
 
 // ----- 表示 -----
 function renderSettings() {
-    const materials = allMaterials();
-    const stages = Object.keys(data.stageDrops);
-
-    // ステージ
-    let html = `<div class="settings-section">
-        <div class="settings-title">ステージ</div>
-        <div class="hint">チェックした素材が、ドロップ統計タブの入力欄に出ます（未チェックなら、入手方法がドロップの素材をすべて表示）。</div>
-        <div class="add-material">
-            <input type="text" id="newStage" placeholder="ステージ名（1-1 など）">
-            <button onclick="addStage()">追加</button>
-        </div>`;
-    if (stages.length === 0) {
-        html += '<div class="empty">まだありません</div>';
-    }
-    stages.forEach(stage => {
-        html += `<div class="stage-row">
-            <div class="material-header">
-                <div class="stage-name" style="margin-bottom: 0;">${escapeHtml(stage)}</div>
-                <button class="danger small" onclick="deleteStage(${jsArg(stage)})">削除</button>
-            </div>
-            <div class="input-wrapper" style="gap: 12px;">
-                ${materials.map(m => `
-                    <label style="min-width: 0;"><input type="checkbox" ${data.stageDrops[stage].includes(m) ? 'checked' : ''}
-                        onchange="toggleStageDrop(${jsArg(stage)}, ${jsArg(m)}, this.checked)"> ${escapeHtml(m)}</label>
-                `).join('')}
-            </div>
-        </div>`;
-    });
-    html += '</div>';
-
     // バックアップ
-    html += `<div class="settings-section">
+    let html = `<div class="settings-section">
         <div class="settings-title">データのバックアップ</div>
         <div class="hint">データはこのブラウザにだけ保存されています。別の端末に移すときや、念のための控えに使ってください。</div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
