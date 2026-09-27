@@ -79,9 +79,6 @@ function checkMasterData() {
     const charNames = CHARACTERS.map(c => c.name);
     charNames.filter((n, i) => charNames.indexOf(n) !== i)
         .forEach(n => errors.push(`キャラ「${n}」が2回以上登録されています`));
-    const numbers = CHARACTERS.map(c => c.no).filter(n => n !== undefined && n !== '');
-    numbers.filter((n, i) => numbers.indexOf(n) !== i)
-        .forEach(n => errors.push(`刀図鑑 ${n} 番が2回以上登録されています`));
     CHARACTERS.forEach(c => {
         if (c.secretColor && !['赤', '青', '黄'].includes(c.secretColor)) {
             errors.push(`キャラ「${c.name}」の奥義色「${c.secretColor}」は 赤 / 青 / 黄 のどれかにしてください`);

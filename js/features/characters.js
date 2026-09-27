@@ -95,13 +95,12 @@ function showCharEditDialog(name) {
     document.body.appendChild(modal);
 }
 
-// 固定データ（刀図鑑・刀種・ゆかり・奥義・レベルごとの能力）
+// 固定データ（刀種・ゆかり・奥義・レベルごとの能力）
 function renderCharInfo(char) {
     const color = SECRET_COLORS[char.secretColor];
     const row = (label, value) => `<div class="stat-row"><span>${label}</span><span class="stat-value">${value || '―'}</span></div>`;
     const levels = char.levels || [];
     return `<div style="background: #f9f9f9; border-radius: 6px; padding: 12px;">
-        ${row('刀図鑑', char.no !== undefined && char.no !== '' ? `No.${escapeHtml(char.no)}` : '')}
         ${row('刀種', escapeHtml(char.swordType || ''))}
         ${row('ゆかり', escapeHtml(char.yukari || ''))}
         ${row('奥義色', color ? `${color.icon} ${escapeHtml(char.secretColor)}` : '')}
@@ -180,7 +179,7 @@ function renderCharCard(char) {
     return `<div class="card" style="${p.owned ? '' : 'opacity: 0.5;'}">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 8px;">
             <div style="flex: 1;">
-                <div class="card-title" style="margin-bottom: 8px;">${char.no !== undefined && char.no !== '' ? `<span style="color: #999; font-weight: 400; font-size: 12px; margin-right: 4px;">No.${escapeHtml(char.no)}</span>` : ''}${escapeHtml(char.name)}</div>
+                <div class="card-title" style="margin-bottom: 8px;">${escapeHtml(char.name)}</div>
                 <div style="font-size: 11px; color: #666; display: flex; gap: 4px; flex-wrap: wrap;">
                     ${char.swordType ? badge('#e3f2fd', `⚔️ ${escapeHtml(char.swordType)}`) : ''}
                     ${char.yukari ? badge('#e8f5e9', `🔗 ${escapeHtml(char.yukari)}`) : ''}
@@ -214,8 +213,8 @@ function renderCharacters() {
         return (ia < 0 ? RARITY_ORDER.length : ia) - (ib < 0 ? RARITY_ORDER.length : ib);
     });
     rarities.forEach((rarity, i) => {
-        const list = chars.filter(c => (c.rarity || 'その他') === rarity && matchesFilter(c))
-            .sort((a, b) => (Number(a.no) || 0) - (Number(b.no) || 0));
+        // 並び順は Excel（js/master/characters.js）の行の順
+        const list = chars.filter(c => (c.rarity || 'その他') === rarity && matchesFilter(c));
         html += `<div class="rarity-section"><div class="rarity-title ${i > 0 ? 'unrevealed' : ''}">${escapeHtml(rarity)}</div>`;
         if (list.length === 0) {
             html += '<div class="empty">条件に合うキャラがありません</div>';
