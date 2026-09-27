@@ -131,9 +131,10 @@ function renderCharInfo(char) {
             </div>`).join('')}` : ''}
         ${levels.length > 0 ? `<div class="sub-title" style="margin-top: 12px;">能力</div>
             <table class="stat-table">
-                <tr><th>Lv</th><th>体力</th><th>攻撃</th></tr>
-                ${levels.map(([lv, [hp, atk]]) => `<tr${Number(lv) === getProgress(char.name).level ? ' style="background: #fff8e1; font-weight: 600;"' : ''}><td>${lv}</td><td>${hp}</td><td>${atk}</td></tr>`).join('')}
+                <tr><th>Lv</th><th>体力</th><th>攻撃</th><th>次Lvまで</th></tr>
+                ${levels.map(([lv, [hp, atk, exp]]) => `<tr${Number(lv) === getProgress(char.name).level ? ' style="background: #fff8e1; font-weight: 600;"' : ''}><td>${lv}</td><td>${hp}</td><td>${atk}</td><td>${exp !== undefined ? exp.toLocaleString() : '―'}</td></tr>`).join('')}
             </table>` : ''}
+        ${expToLevelCap(char.name) !== null ? `<div class="stat-row" style="margin-top: 8px;"><span>Lv${getProgress(char.name).levelCap}まで</span><span class="stat-value">あと ${expToLevelCap(char.name).toLocaleString()} 経験値</span></div>` : ''}
     </div>`;
 }
 
