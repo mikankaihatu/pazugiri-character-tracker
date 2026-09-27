@@ -45,6 +45,21 @@ function getCount(material) {
 
 // ===== 不具合の報告 =====
 const REPORT_FORM_URL = 'https://forms.gle/P9XydgGZhJAK1Bfn6';
+// キャラ・素材・ステージなど、足りていない情報を送ってもらうフォーム
+const INFO_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSd20NaHxD78ToytsjdwiVBgYvdicYdNh_uqdTjLhYnRM8zObQ/viewform';
+
+// キャラの固定データで、まだ埋まっていない項目の名前
+function missingInfoOf(char) {
+    const missing = [];
+    if (!char.swordType) missing.push('刀種');
+    if (yukariOf(char).length === 0) missing.push('ゆかり');
+    if (!char.secretColor) missing.push('奥義色');
+    if (!char.skillName) missing.push('奥義名');
+    if (Object.keys(char.skills || {}).length === 0) missing.push('奥義の説明');
+    if (Object.keys(char.levels || {}).length === 0) missing.push('能力');
+    if ((char.limitBreaks || []).length === 0) missing.push('上限突破の必要素材');
+    return missing;
+}
 
 // 報告フォームに貼ってもらう使用環境（個人の育成データは含めない）
 function environmentInfo() {
