@@ -43,6 +43,43 @@ function getCount(material) {
     return data.inventory[material] || 0;
 }
 
+// ===== 育成に必要な素材の計算（素材トラッキングと在庫管理で共通） =====
+// 素材トラッキングに登録した全キャラの必要素材を合計する
+function trackedNeeds() {
+    const total = {};
+    CHARACTERS.forEach(c => {
+        for (const [m, n] of Object.entries(data.characterLevelUps[c.name] || {})) total[m] = (total[m] || 0) + n;
+    });
+    return total;
+}
+
+// 必要な素材を在庫から割り当て、足りない合成素材はレシピをたどって材料まで展開する（何段階でも）
+// 返り値：{ 素材名: { need: 必要数（合成の材料分を含む）, crafting: うち合成の材料分,
+//                     toCraft: 合成して作る数, short: 集める必要がある数 } }
+function requirementPlan(needs) {
+    const left = { ...data.inventory };
+    const plan = {};
+    const row = m => plan[m] || (plan[m] = { need: 0, crafting: 0, toCraft: 0, short: 0 });
+    const require = (m, qty, forCrafting, depth) => {
+        const r = row(m);
+        r.need += qty;
+        if (forCrafting) r.crafting += qty;
+        const use = Math.min(left[m] || 0, qty);
+        left[m] = (left[m] || 0) - use;
+        const rest = qty - use;
+        if (rest <= 0) return;
+        const recipe = recipeOf(m);
+        if (recipe && depth < 10) {
+            r.toCraft += rest;
+            for (const [src, per] of Object.entries(recipe)) require(src, per * rest, true, depth + 1);
+        } else {
+            r.short += rest;
+        }
+    };
+    for (const [m, n] of Object.entries(needs)) require(m, n, false, 0);
+    return plan;
+}
+
 // ===== ステージ =====
 function stageNames() {
     return STAGES.map(s => s.name);

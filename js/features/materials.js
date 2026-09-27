@@ -76,25 +76,10 @@ function progressOf(needs) {
     return Math.round(have / total * 100);
 }
 
-// 全キャラ分の必要数をまとめ、足りない合成素材はレシピの材料に展開する（1段階）
-function shortageSummary(trackedNames) {
-    const direct = {};
-    trackedNames.forEach(name => {
-        for (const [m, n] of Object.entries(data.characterLevelUps[name])) direct[m] = (direct[m] || 0) + n;
-    });
-    const forCrafting = {};
-    for (const [m, n] of Object.entries(direct)) {
-        const short = n - getCount(m);
-        const recipe = recipeOf(m);
-        if (short > 0 && recipe) {
-            for (const [src, per] of Object.entries(recipe)) forCrafting[src] = (forCrafting[src] || 0) + per * short;
-        }
-    }
-    const materials = [...new Set([...Object.keys(direct), ...Object.keys(forCrafting)])];
-    return materials.map(m => {
-        const need = (direct[m] || 0) + (forCrafting[m] || 0);
-        return { material: m, need, crafting: forCrafting[m] || 0, have: getCount(m), short: Math.max(0, need - getCount(m)) };
-    });
+// 合成レシピがあって、今の在庫から作れるときだけ「合成」ボタンを出す（在庫管理の craft を使う）
+function renderCraftButton(material) {
+    if (!recipeOf(material) || craftableCount(material) < 1) return '';
+    return `<button class="small secondary" style="padding: 2px 6px;" title="在庫から1個合成する" onclick="craft(${jsArg(material)})">合成</button>`;
 }
 
 // レベル上限と、次の上限突破の素材をセットするボタン
@@ -135,20 +120,23 @@ function renderMaterials() {
     }
     html += '</div>';
 
-    // 不足まとめ
-    const summary = shortageSummary(trackedNames);
+    // 不足まとめ（合成素材はレシピをたどって材料まで展開する）
+    const plan = requirementPlan(trackedNeeds());
+    const rows = Object.entries(plan);
     html += '<div class="section-title">不足まとめ（全キャラ合計）</div>';
-    if (summary.length === 0) {
+    if (rows.length === 0) {
         html += '<div class="empty" style="margin-bottom: 20px;">必要素材が登録されていません</div>';
     } else {
         html += `<div class="card" style="margin-bottom: 20px;">
+            <div class="hint">在庫で足りない合成素材は、合成レシピをたどって材料まで計算しています。「合成」は、今の在庫から1個作ります。</div>
             <table class="stat-table">
-                <tr><th>素材</th><th>必要</th><th>在庫</th><th>不足</th></tr>
-                ${summary.map(r => `<tr>
-                    <td>${escapeHtml(r.material)}</td>
-                    <td>${r.need}${r.crafting > 0 ? `<span class="hint-inline">（うち合成用${r.crafting}）</span>` : ''}</td>
-                    <td>${r.have}</td>
-                    <td class="${r.short > 0 ? 'shortage' : 'enough'}">${r.short > 0 ? r.short : 'OK'}</td>
+                <tr><th>素材</th><th>必要</th><th>在庫</th><th>合成</th><th>不足</th></tr>
+                ${rows.map(([m, r]) => `<tr>
+                    <td>${escapeHtml(m)}</td>
+                    <td>${r.need}${r.crafting > 0 ? `<span class="hint-inline">（うち合成の材料${r.crafting}）</span>` : ''}</td>
+                    <td>${getCount(m)}</td>
+                    <td>${r.toCraft > 0 ? `あと${r.toCraft} ${renderCraftButton(m)}` : ''}</td>
+                    <td class="${r.short > 0 ? 'shortage' : r.toCraft > 0 ? 'to-craft' : 'enough'}">${r.short > 0 ? r.short : r.toCraft > 0 ? '合成' : 'OK'}</td>
                 </tr>`).join('')}
             </table>
         </div>`;
@@ -177,6 +165,7 @@ function renderMaterials() {
                 <div class="stat-row" style="align-items: center;">
                     <span>${escapeHtml(m)}</span>
                     <span class="input-wrapper">
+                        ${getCount(m) < n ? renderCraftButton(m) : ''}
                         <span class="${getCount(m) >= n ? 'enough' : 'shortage'}" style="font-size: 12px;">${getCount(m)} /</span>
                         <input type="number" min="0" value="${n}" style="width: 60px; padding: 4px 6px;" onchange="setLevelUpNeed(${jsArg(name)}, ${jsArg(m)}, this.value)">
                     </span>

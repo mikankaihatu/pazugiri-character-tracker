@@ -65,3 +65,4 @@ button:disabled { background: #bbb; cursor: not-allowed; }
 .enough { color: #2e7d32; }
 .filter-label { font-size: 11px; color: #666; display: block; margin-bottom: 4px; }
 .master-error { background: #ffebee; border: 1px solid #ef9a9a; color: #c62828; border-radius: 6px; padding: 12px; font-size: 13px; margin-top: 12px; }
+.to-craft { color: #ef6c00; }
