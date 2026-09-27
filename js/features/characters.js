@@ -73,6 +73,7 @@ function showCharEditDialog(name) {
     modal.innerHTML = `<div style="background: white; border-radius: 8px; padding: 24px; width: 100%; max-width: 400px; max-height: 80vh; overflow-y: auto;">
         <div style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #333;">${escapeHtml(charLabel(name))}</div>
         ${renderCharInfo(char)}
+        ${renderInfoRequest(char)}
         <div class="sub-title" style="margin-top: 16px;">育成状況</div>
         <div style="margin-bottom: 12px;">
             <label><input type="checkbox" id="edit-owned" ${p.owned ? 'checked' : ''} style="margin-right: 8px;">所持している</label>
@@ -98,6 +99,14 @@ function showCharEditDialog(name) {
         </div>
     </div>`;
     document.body.appendChild(modal);
+}
+
+// 足りていない情報があれば、情報提供フォームへのリンクを出す
+function renderInfoRequest(char) {
+    const missing = missingInfoOf(char);
+    if (missing.length === 0) return '';
+    return `<div class="hint" style="margin: 8px 0 0;">まだ情報がない項目：${escapeHtml(missing.join('・'))}
+        <a href="${INFO_FORM_URL}" target="_blank" rel="noopener" style="margin-left: 4px;">📝 情報を提供する</a></div>`;
 }
 
 // 固定データ（刀種・ゆかり・奥義・レベルごとの能力）

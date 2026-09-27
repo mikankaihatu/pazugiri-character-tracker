@@ -1,5 +1,5 @@
 // ===== 設定タブ =====
-// 不具合の報告と、データのバックアップ
+// 不具合の報告・情報の提供と、データのバックアップ
 // （キャラ・素材・合成レシピ・ステージは data/master.xlsx → js/master/ で管理する）
 
 // ----- 不具合の報告 -----
@@ -68,6 +68,13 @@ function renderSettings() {
             <button class="secondary" onclick="copyEnvironmentInfo(this)">使用環境をコピー</button>
             <a href="${REPORT_FORM_URL}" target="_blank" rel="noopener"><button>報告フォームを開く</button></a>
         </div>
+    </div>`;
+
+    // 情報の提供
+    html += `<div class="settings-section">
+        <div class="settings-title">情報の提供</div>
+        <div class="hint">キャラの能力・奥義・上限突破の必要素材、合成レシピ、ステージのドロップ品など、まだ載っていない情報を教えてください。</div>
+        <a href="${INFO_FORM_URL}" target="_blank" rel="noopener"><button>情報提供フォームを開く</button></a>
     </div>`;
 
     // バックアップ
