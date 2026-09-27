@@ -35,6 +35,7 @@ function deleteCharacter(rarity, id) {
     } else {
         data.characters.unrevealed = data.characters.unrevealed.filter(c => c.id !== id);
     }
+    delete data.characterLevelUps[id];
     saveData();
     renderCharacters();
 }

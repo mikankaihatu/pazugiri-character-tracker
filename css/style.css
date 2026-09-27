@@ -44,3 +44,21 @@ input[type="text"].stage-input { width: 60px; }
 .settings-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #2e7d32; }
 .delete-char { margin-top: 8px; }
 .delete-char button { padding: 4px 8px; font-size: 12px; }
+
+/* 設定・ドロップ統計・在庫・素材トラッキング */
+button.small { padding: 4px 8px; font-size: 12px; }
+button:disabled { background: #bbb; cursor: not-allowed; }
+.section-title { font-size: 15px; font-weight: 600; color: #333; margin: 20px 0 12px; }
+.sub-title { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 6px; }
+.hint { font-size: 12px; color: #666; margin-bottom: 12px; }
+.hint-inline { font-size: 11px; color: #999; margin-left: 4px; }
+.empty { color: #999; font-size: 13px; }
+.chip-list { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 4px; background: white; border: 1px solid #ddd; border-radius: 12px; padding: 2px 4px 2px 10px; font-size: 13px; }
+.chip-delete { background: none; color: #999; padding: 0 6px; font-size: 14px; }
+.chip-delete:hover { background: #eee; color: #d32f2f; }
+.stat-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.stat-table th { text-align: left; font-weight: 500; color: #999; font-size: 11px; padding: 4px 0; border-bottom: 1px solid #eee; }
+.stat-table td { padding: 4px 0; color: #333; border-bottom: 1px solid #f5f5f5; }
+.shortage { color: #d32f2f; font-weight: 600; }
+.enough { color: #2e7d32; }
