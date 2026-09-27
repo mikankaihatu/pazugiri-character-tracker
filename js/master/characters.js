@@ -4,7 +4,7 @@
 
 const CHARACTERS = [
     {"no": 1, "name": "今剣-戦装束", "base": "今剣", "costume": "戦装束", "rarity": "通常", "swordType": "短刀", "yukari": ["源氏"], "secretColor": "赤", "skillValue": 14, "skillName": "色変幻の術・赤", "skills": {"1": "赤以外のト餓鬼を【最大10体】、赤色に変換する"}, "levels": {"1": [459, 74]}, "limitBreaks": []},
-    {"no": 3, "name": "三日月宗近-戦装束", "base": "三日月宗近", "costume": "戦装束", "rarity": "通常", "swordType": "太刀", "yukari": [], "secretColor": "", "skillValue": "", "skillName": "", "skills": {}, "levels": {}, "limitBreaks": []},
+    {"no": 3, "name": "三日月宗近-戦装束", "base": "三日月宗近", "costume": "戦装束", "rarity": "通常", "swordType": "太刀", "yukari": ["夜"], "secretColor": "赤", "skillValue": 22, "skillName": "正円白刃斬り", "skills": {"1": "【円型・小範囲】のト餓鬼を消去し、敵に【特小＋＋】ダメージを与える"}, "levels": {"1": [513, 67]}, "limitBreaks": []},
     {"no": 3, "name": "三日月宗近-戦装束-レア", "base": "三日月宗近", "costume": "戦装束", "rarity": "レア", "swordType": "太刀", "yukari": ["夜", "天下五剣"], "secretColor": "赤", "skillValue": 22, "skillName": "月明かりの冴え", "skills": {"1": "【すべて】のト餓鬼を消去し、敵に【特小++】ダメージを与える"}, "levels": {"13": [1060, 140]}, "limitBreaks": []},
     {"no": 5, "name": "小狐丸-戦装束", "base": "小狐丸", "costume": "戦装束", "rarity": "通常", "swordType": "太刀", "yukari": ["けもの"], "secretColor": "赤", "skillValue": 27, "skillName": "ボム練成の術 三の火", "skills": {"1": "ボムを【3個】生成する"}, "levels": {"1": [556, 58], "5": [740, 77]}, "limitBreaks": []},
     {"no": 7, "name": "石切丸-戦装束", "base": "石切丸", "costume": "戦装束", "rarity": "通常", "swordType": "大太刀", "yukari": ["ご神刀"], "secretColor": "青", "skillValue": 22, "skillName": "逆さ扇斬り 守護の型", "skills": {"1": "【扇型・中範囲】のト餓鬼を消去し、敵に【特小－】ダメージを与える。\n味方全員に被ダメージ軽減【極小＋・3手】を付与する"}, "levels": {"1": [561, 61], "4": [700, 76], "8": [886, 96], "10": [979, 106]}, "limitBreaks": []},
@@ -46,6 +46,10 @@ const CHARACTERS = [
     {"no": "", "name": "燭台切光忠-戦装束", "base": "燭台切光忠", "costume": "戦装束", "rarity": "通常", "swordType": "太刀", "yukari": ["もの斬り"], "secretColor": "赤", "skillValue": 27, "skillName": "必中縦断斬り ボムの型", "skills": {"1": "指定した【縦列・小範囲】のト餓鬼を消去し、敵に【特小＋＋】ダメージを与える\nボムを【1個】生成する"}, "levels": {"1": [547, 66]}, "limitBreaks": []},
     {"no": "", "name": "愛染国俊-戦装束", "base": "愛染国俊", "costume": "戦装束", "rarity": "通常", "swordType": "短刀", "yukari": ["炎"], "secretColor": "赤", "skillValue": 17, "skillName": "強攻の法", "skills": {"1": "自身に攻撃力上昇【特小・1手】を付与する\n自身に攻撃力上昇【極小＋・1手】を付与する"}, "levels": {"1": [483, 62]}, "limitBreaks": []},
     {"no": "", "name": "にっかり青江-戦装束", "base": "にっかり青江", "costume": "戦装束", "rarity": "通常", "swordType": "脇差", "yukari": ["夜"], "secretColor": "赤", "skillValue": 15, "skillName": "守備制約の計", "skills": {"1": "敵に被ダメージ増加【極小＋・1手】を付与する"}, "levels": {"1": [524, 65]}, "limitBreaks": []},
+    {"no": "", "name": "秋田藤四郎-戦装束", "base": "秋田藤四郎", "costume": "戦装束", "rarity": "通常", "swordType": "短刀", "yukari": ["兄弟"], "secretColor": "赤", "skillValue": 15, "skillName": "受け流しの法", "skills": {"1": "味方全員にガード率上昇【中－・5手】を付与する"}, "levels": {"1": [473, 60]}, "limitBreaks": []},
+    {"no": "", "name": "薬研藤四郎-戦装束", "base": "薬研藤四郎", "costume": "戦装束", "rarity": "通常", "swordType": "短刀", "yukari": ["兄弟"], "secretColor": "赤", "skillValue": 16, "skillName": "真っ向斬り 攻勢の型", "skills": {"1": "【縦列・特小範囲】のト餓鬼を消去し、敵に【極小】ダメージを与える\n味方全員にクリティカル率上昇【小・3手】を付与する"}, "levels": {"1": [542, 55]}, "limitBreaks": []},
+    {"no": "", "name": "前田藤四郎-戦装束", "base": "前田藤四郎", "costume": "戦装束", "rarity": "通常", "swordType": "短刀", "yukari": ["兄弟"], "secretColor": "赤", "skillValue": 14, "skillName": "色変幻の術・黄", "skills": {"1": "青色のト餓鬼を【最大10体】、黄色に変換する"}, "levels": {"1": [565, 58]}, "limitBreaks": []},
+    {"no": "", "name": "鶯丸-戦装束", "base": "鶯丸", "costume": "戦装束", "rarity": "通常", "swordType": "太刀", "yukari": ["鳥"], "secretColor": "赤", "skillValue": 22, "skillName": "霧散斬り・青", "skills": {"1": "ランダムな青ト餓鬼を【最大8体】消去し、敵に【小＋＋】ダメージを与える"}, "levels": {"1": [626, 54]}, "limitBreaks": []},
 ];
 
 // 経験値表（全キャラ共通・レアも同じ）
