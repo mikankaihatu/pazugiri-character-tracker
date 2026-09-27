@@ -114,8 +114,8 @@ function renderCharInfo(char) {
         ${row('ゆかり', escapeHtml(yukariOf(char).join('・')))}
         ${row('奥義色', color ? `${color.icon} ${escapeHtml(char.secretColor)}` : '')}
         ${row('奥義数値', escapeHtml(char.skillValue ?? ''))}
-        ${skills.length > 0 ? `<div class="sub-title" style="margin-top: 12px;">奥義</div>
-            ${skills.map(([lv, text]) => `<div style="font-size: 12px; color: #666; margin-bottom: 6px;"><span class="stat-value">Lv${lv}</span>　${escapeHtml(text)}</div>`).join('')}` : ''}
+        ${skills.length > 0 || char.skillName ? `<div class="sub-title" style="margin-top: 12px;">奥義${char.skillName ? `：${escapeHtml(char.skillName)}` : ''}</div>
+            ${skills.map(([lv, text]) => `<div style="font-size: 12px; color: #666; margin-bottom: 6px; white-space: pre-line;"><span class="stat-value">Lv${lv}</span>　${escapeHtml(text)}</div>`).join('')}` : ''}
         ${(char.limitBreaks || []).length > 0 ? `<div class="sub-title" style="margin-top: 12px;">上限突破の必要素材</div>
             ${char.limitBreaks.map(lb => `<div style="font-size: 12px; color: #666; margin-bottom: 6px;">
                 <span class="stat-value">Lv${lb.from}→${lb.to}</span>　${Object.entries(lb.materials).map(([m, n]) =>

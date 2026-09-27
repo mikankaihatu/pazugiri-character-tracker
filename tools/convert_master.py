@@ -5,7 +5,7 @@
     python3 tools/convert_master.py
 
 Excel のシート:
-    キャラクター名 : 刀剣男士番号 / 刀剣男士 / 衣装 / レア / 刀種類 / ゆかり / 奥義色 / 奥義数値 /
+    キャラクター名 : 刀剣男士番号 / 刀剣男士 / 衣装 / レア / 刀種類 / ゆかり / 奥義色 / 奥義数値 / 奥義名 /
                      奥義lv1説明文 … 奥義lv5説明文 / 1lv[体力,攻撃] … 30lv[体力,攻撃] /
                      上限突破10→20 / 上限突破20→30 / 上限突破30→35（お花3,葉っぱ2 または [お花,3][葉っぱ,2] の形。列を足せば 35→40 なども読める）
     素材           : 分類 / 名前 / 入手方法 / 効果
@@ -122,6 +122,7 @@ def read_characters(ws):
         'secretColor': find_column(headers, '奥義色'),
         'skillValue': find_column(headers, '奥義数値'),
     }
+    skill_name_col = headers.index('奥義名') if '奥義名' in headers else None
     # 「奥義lv1説明文」…「奥義lv5説明文」と「1lv[体力,攻撃]」…「30lv[体力,攻撃]」の列（増えても読めるようにする）
     skill_cols = {int(m.group(1)): i for i, h in enumerate(headers) if (m := re.match(r'^奥義lv(\d+)', h))}
     level_cols = {int(m.group(1)): i for i, h in enumerate(headers) if (m := re.match(r'^(\d+)lv', h))}
@@ -162,6 +163,7 @@ def read_characters(ws):
             'yukari': split_list(row[col['yukari']]),
             'secretColor': text(row[col['secretColor']]),
             'skillValue': to_number(skill_value) if isinstance(skill_value, (int, float)) else text(skill_value),
+            'skillName': text(row[skill_name_col]) if skill_name_col is not None else '',
             'skills': skills,
             'levels': levels,
             'limitBreaks': limit_breaks,
