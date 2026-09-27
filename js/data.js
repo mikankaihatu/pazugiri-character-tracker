@@ -3,7 +3,7 @@
 
 // ===== データ構造 =====
 const INITIAL_DATA = {
-    characterProgress: {},   // { キャラ名: { owned, trustLevel, levelCap } }
+    characterProgress: {},   // { キャラ名: { owned, level, levelCap, trustLevel } }
     characterLevelUps: {},   // { キャラ名: { 素材名: 必要数 } }
     levelUpTargets: {},      // { キャラ名: 上限突破後のレベル上限 }（上限突破の素材をセットしたとき）
     inventory: {},           // { 素材名: 所持数 }

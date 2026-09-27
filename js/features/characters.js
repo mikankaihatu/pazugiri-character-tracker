@@ -1,6 +1,6 @@
 // ===== キャラ一覧タブ =====
 // キャラの一覧（刀剣男士・衣装・刀種・ゆかり・奥義など）は data/master.xlsx → js/master/characters.js で管理する。
-// ここで編集するのは、所持・レベル上限・信頼度の育成状況だけ
+// ここで編集するのは、所持・レベル・レベル上限・信頼度の育成状況だけ
 
 const SECRET_COLORS = {
     '赤': { icon: '🔴', bg: '#ffebee' },
@@ -78,10 +78,15 @@ function showCharEditDialog(name) {
             <label><input type="checkbox" id="edit-owned" ${p.owned ? 'checked' : ''} style="margin-right: 8px;">所持している</label>
         </div>
         <div style="margin-bottom: 12px;">
-            <label style="display: block; font-size: 12px; margin-bottom: 4px; color: #666;">レベル上限</label>
-            <select id="edit-levelCap" style="width: 100%;">
-                ${levelCapOptions().map(n => `<option value="${n}" ${p.levelCap === n ? 'selected' : ''}>Lv${n}</option>`).join('')}
-            </select>
+            <label style="display: block; font-size: 12px; margin-bottom: 4px; color: #666;">レベル / レベル上限</label>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <span style="font-size: 14px;">Lv</span>
+                <input type="number" id="edit-level" value="${p.level}" min="1" max="${p.levelCap}" style="width: 80px;">
+                <span style="font-size: 14px;">/</span>
+                <select id="edit-levelCap" style="flex: 1;" onchange="document.getElementById('edit-level').max = this.value">
+                    ${levelCapOptions().map(n => `<option value="${n}" ${p.levelCap === n ? 'selected' : ''}>Lv${n}</option>`).join('')}
+                </select>
+            </div>
         </div>
         <div style="margin-bottom: 16px;">
             <label style="display: block; font-size: 12px; margin-bottom: 4px; color: #666;">信頼度</label>
@@ -118,16 +123,19 @@ function renderCharInfo(char) {
         ${levels.length > 0 ? `<div class="sub-title" style="margin-top: 12px;">能力</div>
             <table class="stat-table">
                 <tr><th>Lv</th><th>体力</th><th>攻撃</th></tr>
-                ${levels.map(([lv, [hp, atk]]) => `<tr><td>${lv}</td><td>${hp}</td><td>${atk}</td></tr>`).join('')}
+                ${levels.map(([lv, [hp, atk]]) => `<tr${Number(lv) === getProgress(char.name).level ? ' style="background: #fff8e1; font-weight: 600;"' : ''}><td>${lv}</td><td>${hp}</td><td>${atk}</td></tr>`).join('')}
             </table>` : ''}
     </div>`;
 }
 
 function saveCharProgress(name) {
+    const levelCap = parseInt(document.getElementById('edit-levelCap').value) || 10;
     setProgress(name, {
         owned: document.getElementById('edit-owned').checked,
         trustLevel: Math.min(MAX_TRUST_LEVEL, toCount(document.getElementById('edit-trustLevel').value)),
-        levelCap: parseInt(document.getElementById('edit-levelCap').value) || 10
+        levelCap,
+        // レベルは 1 〜 レベル上限の間にする
+        level: Math.min(levelCap, Math.max(1, parseInt(document.getElementById('edit-level').value) || 1))
     });
     closeCharEditDialog();
     renderCharacters();
@@ -203,7 +211,7 @@ function renderCharCard(char) {
                     ${char.swordType ? badge('#e3f2fd', `⚔️ ${escapeHtml(char.swordType)}`) : ''}
                     ${yukariOf(char).map(y => badge('#e8f5e9', `🔗 ${escapeHtml(y)}`)).join('')}
                     ${color ? badge(color.bg, color.icon) : ''}
-                    ${p.levelCap > 10 ? badge('#e0f2f1', `🔓 Lv上限${p.levelCap}`) : ''}
+                    ${p.owned ? badge(p.level >= p.levelCap ? '#c8e6c9' : '#e0f2f1', `📈 Lv${p.level}/${p.levelCap}`) : ''}
                     ${p.trustLevel > 0 ? badge('#f0f4c3', `💖 ${p.trustLevel}`) : ''}
                 </div>
             </div>
