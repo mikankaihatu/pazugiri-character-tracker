@@ -91,7 +91,7 @@ function renderMaterials() {
     } else {
         html += `<div class="add-material" style="margin-bottom: 0;">
             <select id="track-char" style="flex: 1;">
-                ${candidates.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}${getProgress(c.name).needsUpgrade ? '（強化待ち）' : ''}</option>`).join('')}
+                ${candidates.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(charLabel(c.name))}${getProgress(c.name).needsUpgrade ? '（強化待ち）' : ''}</option>`).join('')}
             </select>
             <button onclick="startTracking()">追加</button>
         </div>`;
@@ -130,7 +130,7 @@ function renderMaterials() {
         const ready = Object.keys(needs).length > 0 && progress === 100;
         html += `<div class="card">
             <div class="material-header">
-                <div class="card-title" style="margin-bottom: 0;">${escapeHtml(name)}</div>
+                <div class="card-title" style="margin-bottom: 0;">${escapeHtml(charLabel(name))}</div>
                 <button class="danger small" onclick="stopTracking(${jsArg(name)})">外す</button>
             </div>
             <div class="stat-row"><span>達成率</span><span class="stat-value">${progress}%</span></div>

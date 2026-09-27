@@ -5,11 +5,12 @@
     python tools/convert_master.py
 
 Excel のシート:
-    キャラクター名 : 刀図鑑 / キャラ名 / 刀種類 / ゆかり / 奥義色(赤,黄,青) / 奥義lv1説明文 / 1lv[体力,攻撃] / 2lv / 3lv ...
+    キャラクター名 : 刀図鑑 / 刀剣男士 / 衣装 / レア / 刀種類 / ゆかり / 奥義色(赤,黄,青) / 奥義lv1説明文 / 1lv[体力,攻撃] / 2lv / 3lv ...
     素材           : 分類 / 名前 / 入手方法
     合成レシピ     : 名前 / 必要素材,個数（[木の枝,1][丸太,1] の形）
 
-キャラ名が空の行は読み飛ばす。キャラ名が「-レア」で終わるキャラはレアとして扱う。
+刀剣男士が空の行は読み飛ばす。レアの列は、何か書いてあればレアとして扱う（○ など）。
+アプリで記録を保存するときの名前は「刀剣男士-衣装」、レアなら「刀剣男士-衣装-レア」になる。
 """
 
 import json
@@ -55,7 +56,9 @@ def read_characters(ws):
     headers = [text(h) for h in rows[0]]
     col = {
         'no': find_column(headers, '刀図鑑'),
-        'name': find_column(headers, 'キャラ名'),
+        'base': find_column(headers, '刀剣男士'),
+        'costume': find_column(headers, '衣装'),
+        'rare': find_column(headers, 'レア'),
         'swordType': find_column(headers, '刀種類'),
         'yukari': find_column(headers, 'ゆかり'),
         'secretColor': find_column(headers, '奥義色'),
@@ -66,9 +69,12 @@ def read_characters(ws):
 
     characters = []
     for row in rows[1:]:
-        name = text(row[col['name']])
-        if not name:
+        base = text(row[col['base']])
+        if not base:
             continue
+        costume = text(row[col['costume']])
+        rare = text(row[col['rare']]) != ''
+        name = '-'.join(p for p in [base, costume, 'レア' if rare else ''] if p)
         levels = []
         for i in level_cols:
             pairs = parse_pairs(row[i])
@@ -78,7 +84,9 @@ def read_characters(ws):
         characters.append({
             'no': int(no) if isinstance(no, (int, float)) else text(no),
             'name': name,
-            'rarity': 'レア' if name.endswith('-レア') else '通常',
+            'base': base,
+            'costume': costume,
+            'rarity': 'レア' if rare else '通常',
             'swordType': text(row[col['swordType']]),
             'yukari': text(row[col['yukari']]),
             'secretColor': text(row[col['secretColor']]),

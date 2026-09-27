@@ -1,5 +1,5 @@
 // ===== キャラ一覧タブ =====
-// キャラの一覧（名前・刀種・ゆかり・奥義など）は data/master.xlsx → js/master/characters.js で管理する。
+// キャラの一覧（刀剣男士・衣装・刀種・ゆかり・奥義など）は data/master.xlsx → js/master/characters.js で管理する。
 // ここで編集するのは、所持・強化待ち・限界突破・信頼度の育成状況だけ
 
 const SECRET_COLORS = {
@@ -12,7 +12,9 @@ const SECRET_COLORS = {
 const RARITY_ORDER = ['レア', '通常'];
 
 let filters = {
+    keyword: '',
     owned: '',
+    costume: '',
     swordType: '',
     yukari: '',
     needsUpgrade: false,
@@ -23,6 +25,8 @@ let filters = {
 
 function matchesFilter(char) {
     const p = getProgress(char.name);
+    if (filters.keyword && !(char.base || char.name).includes(filters.keyword)) return false;
+    if (filters.costume && char.costume !== filters.costume) return false;
     if (filters.owned === 'owned' && !p.owned) return false;
     if (filters.owned === 'notOwned' && p.owned) return false;
     if (filters.swordType && char.swordType !== filters.swordType) return false;
@@ -35,6 +39,8 @@ function matchesFilter(char) {
 }
 
 function applyFilters() {
+    filters.keyword = document.getElementById('filter-keyword').value.trim();
+    filters.costume = document.getElementById('filter-costume').value;
     filters.owned = document.getElementById('filter-owned').value;
     filters.swordType = document.getElementById('filter-swordType').value;
     filters.yukari = document.getElementById('filter-yukari').value;
@@ -46,7 +52,7 @@ function applyFilters() {
 }
 
 function clearFilters() {
-    filters = { owned: '', swordType: '', yukari: '', needsUpgrade: false, breakthrough: '', trustLevel: '', secretColor: '' };
+    filters = { keyword: '', owned: '', costume: '', swordType: '', yukari: '', needsUpgrade: false, breakthrough: '', trustLevel: '', secretColor: '' };
     renderCharacters();
 }
 
@@ -68,7 +74,7 @@ function showCharEditDialog(name) {
     modal.id = 'charEditModal';
     modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 10000; padding: 16px;';
     modal.innerHTML = `<div style="background: white; border-radius: 8px; padding: 24px; width: 100%; max-width: 400px; max-height: 80vh; overflow-y: auto;">
-        <div style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #333;">${escapeHtml(name)}</div>
+        <div style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #333;">${escapeHtml(charLabel(name))}</div>
         ${renderCharInfo(char)}
         <div class="sub-title" style="margin-top: 16px;">育成状況</div>
         <div style="margin-bottom: 12px;">
@@ -124,12 +130,23 @@ function saveCharProgress(name) {
 }
 
 function renderCharFilters() {
+    const costumes = [...new Set(allCharacters().map(c => c.costume).filter(Boolean))];
     const swordTypes = [...new Set(allCharacters().map(c => c.swordType).filter(Boolean))];
     const yukaris = [...new Set(allCharacters().map(c => c.yukari).filter(Boolean))];
     const option = (value, label, current) => `<option value="${escapeHtml(value)}" ${String(current) === String(value) ? 'selected' : ''}>${escapeHtml(label)}</option>`;
     return `<div style="background: #f9f9f9; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
         <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px; color: #333;">フィルター</div>
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-bottom: 8px;">
+            <div>
+                <label class="filter-label">名前</label>
+                <input type="text" id="filter-keyword" placeholder="名前で検索" value="${escapeHtml(filters.keyword)}" style="width: 100%; font-size: 12px;" onchange="applyFilters()">
+            </div>
+            <div>
+                <label class="filter-label">衣装</label>
+                <select id="filter-costume" style="width: 100%; font-size: 12px;" onchange="applyFilters()">
+                    ${option('', 'すべて', filters.costume)}${costumes.map(c => option(c, c, filters.costume)).join('')}
+                </select>
+            </div>
             <div>
                 <label class="filter-label">所持</label>
                 <select id="filter-owned" style="width: 100%; font-size: 12px;" onchange="applyFilters()">
@@ -179,8 +196,9 @@ function renderCharCard(char) {
     return `<div class="card" style="${p.owned ? '' : 'opacity: 0.5;'}">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 8px;">
             <div style="flex: 1;">
-                <div class="card-title" style="margin-bottom: 8px;">${escapeHtml(char.name)}</div>
+                <div class="card-title" style="margin-bottom: 8px;">${escapeHtml(char.base || char.name)}</div>
                 <div style="font-size: 11px; color: #666; display: flex; gap: 4px; flex-wrap: wrap;">
+                    ${char.costume ? badge('#ede7f6', `👘 ${escapeHtml(char.costume)}`) : ''}
                     ${char.swordType ? badge('#e3f2fd', `⚔️ ${escapeHtml(char.swordType)}`) : ''}
                     ${char.yukari ? badge('#e8f5e9', `🔗 ${escapeHtml(char.yukari)}`) : ''}
                     ${color ? badge(color.bg, color.icon) : ''}

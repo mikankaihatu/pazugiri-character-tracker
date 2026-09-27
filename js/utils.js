@@ -48,6 +48,14 @@ function allCharacters() {
     return CHARACTERS;
 }
 
+// 画面に出す名前：「三日月宗近（戦装束・レア）」
+function charLabel(name) {
+    const c = CHARACTERS.find(ch => ch.name === name);
+    if (!c || !c.base) return name;
+    const extra = [c.costume, c.rarity === 'レア' ? 'レア' : ''].filter(Boolean).join('・');
+    return extra ? `${c.base}（${extra}）` : c.base;
+}
+
 function getProgress(name) {
     return { owned: false, needsUpgrade: false, breakthrough: 0, trustLevel: 0, ...data.characterProgress[name] };
 }
