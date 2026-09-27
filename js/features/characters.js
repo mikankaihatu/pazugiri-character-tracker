@@ -19,7 +19,9 @@ let filters = {
     yukari: '',
     levelCap: '',
     trustLevel: '',
-    secretColor: ''
+    secretColor: '',
+    skillEffect: '',
+    skillRange: ''
 };
 
 function matchesFilter(char) {
@@ -33,6 +35,13 @@ function matchesFilter(char) {
     if (filters.levelCap !== '' && p.levelCap !== parseInt(filters.levelCap)) return false;
     if (filters.trustLevel !== '' && p.trustLevel < parseInt(filters.trustLevel)) return false;
     if (filters.secretColor && char.secretColor !== filters.secretColor) return false;
+    // 「group:バフ」はバフのどれか、「バフ:攻撃力上昇」はその効果だけ
+    if (filters.skillEffect) {
+        const effects = skillEffectsOf(char);
+        const [kind, value] = filters.skillEffect.split(':');
+        if (kind === 'group' ? !effects.some(e => e.group === value) : !effects.some(e => e.label === value)) return false;
+    }
+    if (filters.skillRange && skillRangeOf(char) !== filters.skillRange) return false;
     return true;
 }
 
@@ -45,11 +54,13 @@ function applyFilters() {
     filters.levelCap = document.getElementById('filter-levelCap').value;
     filters.trustLevel = document.getElementById('filter-trustLevel').value;
     filters.secretColor = document.getElementById('filter-secretColor').value;
+    filters.skillEffect = document.getElementById('filter-skillEffect').value;
+    filters.skillRange = document.getElementById('filter-skillRange').value;
     renderCharacters();
 }
 
 function clearFilters() {
-    filters = { keyword: '', owned: '', costume: '', swordType: '', yukari: '', levelCap: '', trustLevel: '', secretColor: '' };
+    filters = { keyword: '', owned: '', costume: '', swordType: '', yukari: '', levelCap: '', trustLevel: '', secretColor: '', skillEffect: '', skillRange: '' };
     renderCharacters();
 }
 
@@ -134,6 +145,16 @@ function renderInfoRequest(char) {
         <a href="${INFO_FORM_URL}" target="_blank" rel="noopener" style="margin-left: 4px;">📝 情報を提供する</a></div>`;
 }
 
+// 奥義の効果・範囲のタグ（説明文から見分けたもの）
+const SKILL_GROUP_COLORS = { '攻撃': '#ffebee', 'バフ': '#e3f2fd', 'デバフ': '#f3e5f5', '盤面': '#fff8e1' };
+function renderSkillTags(char) {
+    const tags = [
+        ...skillEffectsOf(char).map(e => `<span class="skill-tag" style="background: ${SKILL_GROUP_COLORS[e.group]};">${escapeHtml(e.group === '攻撃' ? e.label : `${e.group}：${e.label}`)}</span>`),
+        ...(skillRangeOf(char) ? [`<span class="skill-tag">範囲：${escapeHtml(skillRangeOf(char))}</span>`] : [])
+    ];
+    return tags.length > 0 ? `<div style="display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px;">${tags.join('')}</div>` : '';
+}
+
 // 固定データ（刀種・ゆかり・奥義・レベルごとの能力）
 // skills は { 奥義レベル: 説明 }、levels は { レベル: [体力, 攻撃] }（書いてあるレベルだけ）
 function renderCharInfo(char) {
@@ -148,6 +169,7 @@ function renderCharInfo(char) {
         ${row('奥義色', color ? `${color.icon} ${escapeHtml(char.secretColor)}` : '')}
         ${row('奥義数値', escapeHtml(char.skillValue ?? ''))}
         ${skills.length > 0 || char.skillName ? `<div class="sub-title" style="margin-top: 12px;">奥義${char.skillName ? `：${escapeHtml(char.skillName)}` : ''}</div>
+            ${renderSkillTags(char)}
             ${skills.map(([lv, text]) => `<div style="font-size: 12px; color: #666; margin-bottom: 6px; white-space: pre-line;"><span class="stat-value">Lv${lv}</span>　${escapeHtml(text)}</div>`).join('')}` : ''}
         ${(char.limitBreaks || []).length > 0 ? `<div class="sub-title" style="margin-top: 12px;">上限突破の必要素材</div>
             ${char.limitBreaks.map(lb => `<div style="font-size: 12px; color: #666; margin-bottom: 6px;">
@@ -181,6 +203,9 @@ function renderCharFilters() {
     const costumes = [...new Set(allCharacters().map(c => c.costume).filter(Boolean))];
     const swordTypes = [...new Set(allCharacters().map(c => c.swordType).filter(Boolean))];
     const yukaris = [...new Set(allCharacters().flatMap(yukariOf))];
+    // 奥義の効果・範囲は、いるキャラの分だけ選べるようにする
+    const usedEffects = new Set(allCharacters().flatMap(c => skillEffectsOf(c).map(e => e.label)));
+    const usedRanges = new Set(allCharacters().map(skillRangeOf));
     const option = (value, label, current) => `<option value="${escapeHtml(value)}" ${String(current) === String(value) ? 'selected' : ''}>${escapeHtml(label)}</option>`;
     return `<div style="background: #f9f9f9; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
         <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px; color: #333;">フィルター</div>
@@ -223,6 +248,26 @@ function renderCharFilters() {
                 <label class="filter-label">奥義色</label>
                 <select id="filter-secretColor" style="width: 100%; font-size: 12px;" onchange="applyFilters()">
                     ${option('', 'すべて', filters.secretColor)}${Object.entries(SECRET_COLORS).map(([k, c]) => option(k, `${c.icon} ${k}`, filters.secretColor)).join('')}
+                </select>
+            </div>
+            <div>
+                <label class="filter-label">奥義の効果</label>
+                <select id="filter-skillEffect" style="width: 100%; font-size: 12px;" onchange="applyFilters()">
+                    ${option('', 'すべて', filters.skillEffect)}
+                    ${SKILL_EFFECT_GROUPS.map(g => {
+                        const effects = SKILL_EFFECTS.filter(e => e.group === g && usedEffects.has(e.label));
+                        if (effects.length === 0) return '';
+                        return `<optgroup label="${escapeHtml(g)}">
+                            ${effects.length > 1 ? option(`group:${g}`, `${g}（どれか）`, filters.skillEffect) : ''}
+                            ${effects.map(e => option(`${g}:${e.label}`, e.label, filters.skillEffect)).join('')}
+                        </optgroup>`;
+                    }).join('')}
+                </select>
+            </div>
+            <div>
+                <label class="filter-label">奥義の範囲</label>
+                <select id="filter-skillRange" style="width: 100%; font-size: 12px;" onchange="applyFilters()">
+                    ${option('', 'すべて', filters.skillRange)}${SKILL_RANGES.filter(r => usedRanges.has(r.label)).map(r => option(r.label, r.label, filters.skillRange)).join('')}
                 </select>
             </div>
             <div>

@@ -71,3 +71,4 @@ button:disabled { background: #bbb; cursor: not-allowed; }
 .site-footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #ddd; font-size: 12px; color: #888; line-height: 1.7; }
 .site-footer p { margin-bottom: 4px; }
 .site-footer a { color: #666; }
+.skill-tag { font-size: 11px; background: #eeeeee; color: #555; padding: 1px 6px; border-radius: 10px; }
