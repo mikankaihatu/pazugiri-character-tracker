@@ -4,6 +4,11 @@
 
 **アプリの URL：** https://mikankaihatu.github.io/pazugiri-character-tracker/
 
+> **非公式ファンツールです。** 「刀剣乱舞ぱずぎり」の公式、および合同会社EXNOA をはじめとする権利者とは一切関係ありません。
+> ゲームに関する権利は各権利者に帰属します。このサイトについて公式へのお問い合わせはご遠慮ください。
+> このサイトは [Claude Code](https://claude.com/claude-code) を使用して作成しました。
+> お問い合わせ：[X（@mikan_kaihatu）](https://x.com/mikan_kaihatu)
+
 ## 使い方
 
 上の URL をブラウザで開くと使えます。
