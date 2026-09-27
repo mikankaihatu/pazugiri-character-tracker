@@ -238,6 +238,13 @@ def main():
     categories = list(dict.fromkeys(m['category'] for m in materials))
     stages = read_stages(wb['ステージドロップ品']) if 'ステージドロップ品' in wb.sheetnames else []
 
+    # 同じ名前が2回以上ある（素材・キャラ・ステージ）
+    for label, names in [('素材', [m['name'] for m in materials]),
+                         ('キャラ', [c['name'] for c in characters]),
+                         ('ステージ', [st['name'] for st in stages])]:
+        for name in dict.fromkeys(n for n in names if names.count(n) > 1):
+            warnings.append(f'{label}「{name}」が {names.count(name)} 回登録されています（1つにしてください）')
+
     # 素材シートにない名前（合成レシピ・上限突破・ステージドロップ品で使われているもの）
     known = {m['name'] for m in materials}
     missing = {}

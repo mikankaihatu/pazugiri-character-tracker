@@ -36,4 +36,12 @@ const MATERIALS = [
     {"name": "打刀の心得", "category": "贈物", "source": "合成", "recipe": {"紙": 6, "筆": 6, "鬼のツノ": 4}},
     {"name": "赤の絵具", "category": "贈物", "source": "イベント", "effect": "強化素材"},
     {"name": "青の絵具", "category": "贈物", "source": "イベント", "effect": "強化素材"},
+    {"name": "筆", "category": "贈物", "source": "合成", "recipe": {"木の枝": 2, "ふさふさの毛": 1}},
+    {"name": "とんかち", "category": "贈物", "source": "合成", "recipe": {"丸太": 1, "鉄": 1}},
+    {"name": "鬼のツノ", "category": "贈物", "source": "ドロップ"},
+    {"name": "獣の牙", "category": "贈物", "source": "ドロップ"},
+    {"name": "トラの毛皮", "category": "贈物", "source": "ドロップ"},
+    {"name": "みかげ石", "category": "贈物", "source": "ドロップ"},
+    {"name": "ろうそく", "category": "贈物", "source": "ドロップ"},
+    {"name": "元結", "category": "贈物", "source": "ドロップ"},
 ];
