@@ -57,23 +57,44 @@ def parse_pairs(value):
 
 warnings = []   # 読めなかった値（読み飛ばしたもの）
 notes = []      # まだ埋まっていないところ（読み飛ばしてはいない）
+exp_table = {}  # { レベル: そのレベルから次のレベルに上がるのに必要な累計経験値 }（全キャラ共通）
 
 
 def parse_stat(value, where):
-    """能力のセルを [体力, 攻撃] または [体力, 攻撃, 次レベル必要経験値] にする。空なら None
-        '740,77' / '[740,77]' / '1543,229,30000' のどれでもよい
+    """能力のセルを [体力, 攻撃] または [体力, 攻撃, 累計の必要経験値] にする。空なら None
+        '740,77' / '[740,77]' / '1543,229,30000' のどれでもよい（3つ目は累計の必要経験値）
     """
     if value is None or text(value) == '':
         return None
     if isinstance(value, (int, float)):
         # Excel が「1060,140」を 1,060,140 という数値に変えてしまった場合
-        warnings.append(f'{where}: 「{value}」が数値になっています。セルの書式を「文字列」にして「体力,攻撃,次レベル必要経験値」の形で入れ直してください')
+        warnings.append(f'{where}: 「{value}」が数値になっています。セルの書式を「文字列」にして「体力,攻撃」の形で入れ直してください')
         return None
     parts = [p.strip() for p in re.split(r'[,、，]', text(value).strip('[]［］ '))]
     if len(parts) not in (2, 3) or not all(re.fullmatch(r'\d+(\.\d+)?', p) for p in parts):
-        warnings.append(f'{where}: 「{value}」は「体力,攻撃」か「体力,攻撃,次レベル必要経験値」の形になっていません')
+        warnings.append(f'{where}: 「{value}」は「体力,攻撃」か「体力,攻撃,経験値」の形になっていません')
         return None
     return [to_number(p) for p in parts]
+
+
+def parse_exp(value, where):
+    """経験値のセルを整数にする。空なら None（「30,000」のような桁区切りも可）"""
+    if value is None or text(value) == '':
+        return None
+    if isinstance(value, (int, float)):
+        return int(value)
+    digits = re.sub(r'[,，\s]', '', unicodedata.normalize('NFKC', text(value)))
+    if not digits.isdigit():
+        warnings.append(f'{where}: 「{value}」は経験値（数字）になっていません')
+        return None
+    return int(digits)
+
+
+def add_exp(lv, exp, where):
+    if lv in exp_table and exp_table[lv] != exp:
+        warnings.append(f'{where}: {lv}lv の経験値が {exp_table[lv]} と {exp} で食い違っています（全キャラ共通のはずです）')
+        return
+    exp_table[lv] = exp
 
 
 def split_list(value):
@@ -134,6 +155,13 @@ def read_characters(ws):
 
     characters = []
     for row_number, row in enumerate(rows[1:], start=2):
+        # 「経験値」の行：各レベルの列に、ゲーム画面の「/」の右の数（累計の必要経験値）を書く（全キャラ共通）
+        if text(row[0]).startswith('経験値'):
+            for lv, i in level_cols.items():
+                exp = parse_exp(row[i], f'{row_number}行目 経験値 {lv}lv')
+                if exp is not None:
+                    add_exp(lv, exp, f'{row_number}行目 経験値')
+            continue
         base = text(row[col['base']])
         if not base:
             continue
@@ -145,6 +173,9 @@ def read_characters(ws):
         for lv, i in level_cols.items():
             stat = parse_stat(row[i], f'{row_number}行目 {base} {lv}lv')
             if stat:
+                # 3つ目（経験値）は全キャラ共通の経験値表に入れる
+                if len(stat) == 3:
+                    add_exp(lv, int(stat.pop()), f'{row_number}行目 {base}')
                 levels[str(lv)] = stat
         skills = {str(lv): text(row[i]) for lv, i in skill_cols.items() if text(row[i])}
         # [{ from: 10, to: 20, materials: { 素材名: 個数 } }]（書いてある段階だけ）
@@ -167,7 +198,7 @@ def read_characters(ws):
             'skillValue': to_number(skill_value) if isinstance(skill_value, (int, float)) else text(skill_value),
             'skillName': text(row[skill_name_col]) if skill_name_col is not None else '',
             'skills': skills,
-            'levels': levels,   # { レベル: [体力, 攻撃] または [体力, 攻撃, 次レベル必要経験値] }
+            'levels': levels,   # { レベル: [体力, 攻撃] }
             'limitBreaks': limit_breaks,
         })
     return characters
@@ -270,7 +301,10 @@ def main():
 
     (OUT_DIR / 'characters.js').write_text(
         '// ===== キャラの固定データ =====\n' + HEADER
-        + 'const CHARACTERS = [\n' + '\n'.join(js_line(c) for c in characters) + '\n];\n',
+        + 'const CHARACTERS = [\n' + '\n'.join(js_line(c) for c in characters) + '\n];\n\n'
+        + '// 経験値表（全キャラ共通・レアも同じ）\n'
+        + '// { レベル: そのレベルから次のレベルに上がるのに必要な累計経験値（ゲーム画面の「/」の右の数） }\n'
+        + 'const EXP_TABLE = ' + json.dumps({str(k): exp_table[k] for k in sorted(exp_table)}) + ';\n',
         encoding='utf-8')
     (OUT_DIR / 'materials.js').write_text(
         '// ===== 素材の固定データ =====\n' + HEADER
@@ -284,7 +318,7 @@ def main():
         + 'const STAGES = [\n' + '\n'.join(js_line(st) for st in stages) + '\n];\n',
         encoding='utf-8')
 
-    print(f'キャラ {len(characters)} 件、素材 {len(materials)} 件、ステージ {len(stages)} 件を書き出しました')
+    print(f'キャラ {len(characters)} 件、素材 {len(materials)} 件、ステージ {len(stages)} 件、経験値 {len(exp_table)} レベル分を書き出しました')
     if notes:
         print(f'\nメモ（まだ埋まっていないところ）:')
         for n in notes:

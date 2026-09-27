@@ -183,18 +183,23 @@ function nextLimitBreak(name) {
     return (char && (char.limitBreaks || []).find(lb => lb.from === cap)) || null;
 }
 
-// 今のレベルからレベル上限までに必要な経験値の合計（途中のレベルの経験値が1つでも不明なら null）
-function expToLevelCap(name) {
-    const char = CHARACTERS.find(c => c.name === name);
-    const { level, levelCap } = getProgress(name);
-    if (!char || level >= levelCap) return null;
-    let total = 0;
-    for (let lv = level; lv < levelCap; lv++) {
-        const stat = (char.levels || {})[lv];
-        if (!stat || stat[2] === undefined) return null;
-        total += stat[2];
-    }
-    return total;
+// ===== 経験値 =====
+// EXP_TABLE[N] は Lv N から N+1 に上がるのに必要な累計経験値（ゲーム画面の「/」の右の数・全キャラ共通）
+function expThreshold(level) {
+    if (level <= 1) return 0;   // Lv1 は経験値 0 から
+    const value = (typeof EXP_TABLE !== 'undefined' ? EXP_TABLE : {})[level - 1];
+    return value === undefined ? null : value;
+}
+
+// 今の経験値と、次のレベル・レベル上限までにあと何経験値いるか（わからないものは null）
+// 経験値を入れていない（または今のレベルと合わない）ときは、今のレベルになったばかりとして数える
+function expStatus(name) {
+    const { level, levelCap, exp } = getProgress(name);
+    const start = expThreshold(level), next = expThreshold(level + 1);
+    const fits = typeof exp === 'number' && (start === null || exp >= start) && (next === null || exp < next);
+    const current = fits ? exp : start;
+    const left = target => (current === null || target === null || level >= levelCap) ? null : Math.max(0, target - current);
+    return { current, entered: fits, toNext: left(next), toCap: left(expThreshold(levelCap)) };
 }
 
 function setProgress(name, changes) {
