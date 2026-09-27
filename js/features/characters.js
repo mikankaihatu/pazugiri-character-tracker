@@ -30,7 +30,7 @@ function matchesFilter(char) {
     if (filters.owned === 'owned' && !p.owned) return false;
     if (filters.owned === 'notOwned' && p.owned) return false;
     if (filters.swordType && char.swordType !== filters.swordType) return false;
-    if (filters.yukari && char.yukari !== filters.yukari) return false;
+    if (filters.yukari && !yukariOf(char).includes(filters.yukari)) return false;
     if (filters.needsUpgrade && !p.needsUpgrade) return false;
     if (filters.breakthrough !== '' && p.breakthrough !== parseInt(filters.breakthrough)) return false;
     if (filters.trustLevel !== '' && p.trustLevel < parseInt(filters.trustLevel)) return false;
@@ -102,19 +102,25 @@ function showCharEditDialog(name) {
 }
 
 // 固定データ（刀種・ゆかり・奥義・レベルごとの能力）
+// skills は { 奥義レベル: 説明 }、levels は { レベル: [体力, 攻撃] }（書いてあるレベルだけ）
 function renderCharInfo(char) {
     const color = SECRET_COLORS[char.secretColor];
     const row = (label, value) => `<div class="stat-row"><span>${label}</span><span class="stat-value">${value || '―'}</span></div>`;
-    const levels = char.levels || [];
+    const byLevel = obj => Object.entries(obj || {}).sort((a, b) => Number(a[0]) - Number(b[0]));
+    const skills = byLevel(char.skills);
+    const levels = byLevel(char.levels);
     return `<div style="background: #f9f9f9; border-radius: 6px; padding: 12px;">
         ${row('刀種', escapeHtml(char.swordType || ''))}
-        ${row('ゆかり', escapeHtml(char.yukari || ''))}
+        ${row('ゆかり', escapeHtml(yukariOf(char).join('・')))}
         ${row('奥義色', color ? `${color.icon} ${escapeHtml(char.secretColor)}` : '')}
-        ${char.skill ? `<div style="font-size: 12px; color: #666; margin: 8px 0;">奥義：${escapeHtml(char.skill)}</div>` : ''}
-        ${levels.length > 0 ? `<table class="stat-table">
-            <tr><th>Lv</th><th>体力</th><th>攻撃</th></tr>
-            ${levels.map(([hp, atk], i) => `<tr><td>${i + 1}</td><td>${hp}</td><td>${atk}</td></tr>`).join('')}
-        </table>` : ''}
+        ${row('奥義数値', escapeHtml(char.skillValue ?? ''))}
+        ${skills.length > 0 ? `<div class="sub-title" style="margin-top: 12px;">奥義</div>
+            ${skills.map(([lv, text]) => `<div style="font-size: 12px; color: #666; margin-bottom: 6px;"><span class="stat-value">Lv${lv}</span>　${escapeHtml(text)}</div>`).join('')}` : ''}
+        ${levels.length > 0 ? `<div class="sub-title" style="margin-top: 12px;">能力</div>
+            <table class="stat-table">
+                <tr><th>Lv</th><th>体力</th><th>攻撃</th></tr>
+                ${levels.map(([lv, [hp, atk]]) => `<tr><td>${lv}</td><td>${hp}</td><td>${atk}</td></tr>`).join('')}
+            </table>` : ''}
     </div>`;
 }
 
@@ -132,7 +138,7 @@ function saveCharProgress(name) {
 function renderCharFilters() {
     const costumes = [...new Set(allCharacters().map(c => c.costume).filter(Boolean))];
     const swordTypes = [...new Set(allCharacters().map(c => c.swordType).filter(Boolean))];
-    const yukaris = [...new Set(allCharacters().map(c => c.yukari).filter(Boolean))];
+    const yukaris = [...new Set(allCharacters().flatMap(yukariOf))];
     const option = (value, label, current) => `<option value="${escapeHtml(value)}" ${String(current) === String(value) ? 'selected' : ''}>${escapeHtml(label)}</option>`;
     return `<div style="background: #f9f9f9; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
         <div style="font-size: 13px; font-weight: 600; margin-bottom: 12px; color: #333;">フィルター</div>
@@ -200,7 +206,7 @@ function renderCharCard(char) {
                 <div style="font-size: 11px; color: #666; display: flex; gap: 4px; flex-wrap: wrap;">
                     ${char.costume ? badge('#ede7f6', `👘 ${escapeHtml(char.costume)}`) : ''}
                     ${char.swordType ? badge('#e3f2fd', `⚔️ ${escapeHtml(char.swordType)}`) : ''}
-                    ${char.yukari ? badge('#e8f5e9', `🔗 ${escapeHtml(char.yukari)}`) : ''}
+                    ${yukariOf(char).map(y => badge('#e8f5e9', `🔗 ${escapeHtml(y)}`)).join('')}
                     ${color ? badge(color.bg, color.icon) : ''}
                     ${p.needsUpgrade ? badge('#fff3e0', '🔧 強化待ち') : ''}
                     ${p.breakthrough > 0 ? badge('#f3e5f5', `⭐ 限界${p.breakthrough}`) : ''}

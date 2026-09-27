@@ -56,6 +56,12 @@ function charLabel(name) {
     return extra ? `${c.base}（${extra}）` : c.base;
 }
 
+// ゆかりは複数ある（["夜", "天下五剣"]）。古い形の文字列でも配列にして返す
+function yukariOf(char) {
+    if (Array.isArray(char.yukari)) return char.yukari;
+    return char.yukari ? [char.yukari] : [];
+}
+
 function getProgress(name) {
     return { owned: false, needsUpgrade: false, breakthrough: 0, trustLevel: 0, ...data.characterProgress[name] };
 }

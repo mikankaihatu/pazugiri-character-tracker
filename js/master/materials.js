@@ -26,5 +26,6 @@ const MATERIALS = [
     {"name": "油", "category": "贈物", "source": "ドロップ"},
     {"name": "ネジ", "category": "贈物", "source": "ドロップ"},
     {"name": "水", "category": "贈物", "source": "ドロップ"},
+    {"name": "大豆", "category": "贈物", "source": "ドロップ"},
     {"name": "紙", "category": "贈物", "source": "合成", "recipe": {"木の枝": 1, "丸太": 1, "水": 1}},
 ];
