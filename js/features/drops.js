@@ -6,7 +6,7 @@ let selectedDropStage = '';
 // ステージで入力する素材（設定タブで未指定ならドロップ素材すべて）
 function dropMaterialsFor(stage) {
     const listed = data.stageDrops[stage] || [];
-    return listed.length > 0 ? listed : (data.materialCategories['ドロップ素材'] || []);
+    return listed.length > 0 ? listed : materialsInCategory('ドロップ素材');
 }
 
 function selectDropStage(stage) {
@@ -84,7 +84,7 @@ function renderDrops() {
                 ${dropMaterialsFor(selectedDropStage).map((m, i) => `
                     <span class="input-wrapper"><label>${escapeHtml(m)}</label>
                     <input type="number" id="run-drop-${i}" min="0" value="0"></span>
-                `).join('') || '<span class="empty">設定タブで素材を登録してください</span>'}
+                `).join('') || '<span class="empty">js/master/materials.js に素材を登録してください</span>'}
             </div>
             <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
                 <button onclick="recordRun()">記録する</button>

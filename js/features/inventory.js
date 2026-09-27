@@ -13,18 +13,15 @@ function changeInventory(material, delta) {
     renderInventory();
 }
 
-function hasRecipe(product) {
-    return !!data.recipes[product] && Object.keys(data.recipes[product]).length > 0;
-}
-
 function craftableCount(product) {
-    if (!hasRecipe(product)) return 0;
-    return Math.min(...Object.entries(data.recipes[product]).map(([m, n]) => Math.floor(getCount(m) / n)));
+    const recipe = recipeOf(product);
+    if (!recipe) return 0;
+    return Math.min(...Object.entries(recipe).map(([m, n]) => Math.floor(getCount(m) / n)));
 }
 
 function craft(product) {
     if (craftableCount(product) < 1) return;
-    for (const [m, n] of Object.entries(data.recipes[product])) data.inventory[m] = getCount(m) - n;
+    for (const [m, n] of Object.entries(recipeOf(product))) data.inventory[m] = getCount(m) - n;
     data.inventory[product] = getCount(product) + 1;
     saveData();
     renderInventory();
@@ -32,11 +29,12 @@ function craft(product) {
 
 function renderInventory() {
     let html = '';
-    for (const [category, materials] of Object.entries(data.materialCategories)) {
+    for (const category of MATERIAL_CATEGORIES) {
+        const materials = materialsInCategory(category);
         html += `<div class="rarity-section">
             <div class="rarity-title">${escapeHtml(category)}</div>`;
         if (materials.length === 0) {
-            html += '<div class="empty">設定タブで素材を登録してください</div>';
+            html += '<div class="empty">js/master/materials.js に素材を登録すると、ここに表示されます</div>';
         }
         materials.forEach(m => {
             html += `<div class="material-item">
@@ -48,8 +46,8 @@ function renderInventory() {
                         <button class="secondary small" onclick="changeInventory(${jsArg(m)}, 1)">＋</button>
                     </span>
                 </div>`;
-            if (hasRecipe(m)) {
-                const recipeText = Object.entries(data.recipes[m])
+            if (recipeOf(m)) {
+                const recipeText = Object.entries(recipeOf(m))
                     .map(([src, n]) => `${escapeHtml(src)}×${n}（所持${getCount(src)}）`).join('、');
                 const craftable = craftableCount(m);
                 html += `<div class="material-header" style="margin: 8px 0 0; font-size: 12px; color: #666;">

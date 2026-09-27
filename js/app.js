@@ -15,6 +15,15 @@ function switchTab(tabName) {
 }
 
 // ===== 初期化 =====
+// js/master/ に書き間違いがあれば、画面の上に表示する
+const masterErrors = checkMasterData();
+if (masterErrors.length > 0) {
+    document.querySelector('.header').insertAdjacentHTML('beforeend', `<div class="master-error">
+        <div style="font-weight: 600; margin-bottom: 4px;">js/master/ の固定データに問題があります</div>
+        ${masterErrors.map(e => `<div>・${escapeHtml(e)}</div>`).join('')}
+    </div>`);
+}
+
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', (e) => switchTab(e.target.dataset.tab));
 });

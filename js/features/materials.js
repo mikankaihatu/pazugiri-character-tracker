@@ -2,22 +2,22 @@
 // キャラごとの育成に必要な素材を登録し、在庫と比べて不足を出す
 
 function startTracking() {
-    const id = parseInt(document.getElementById('track-char').value);
-    if (!id) return;
-    data.characterLevelUps[id] = data.characterLevelUps[id] || {};
+    const name = document.getElementById('track-char').value;
+    if (!name) return;
+    data.characterLevelUps[name] = data.characterLevelUps[name] || {};
     saveData();
     renderMaterials();
 }
 
-function stopTracking(charId) {
+function stopTracking(name) {
     if (!confirm('このキャラの必要素材を削除しますか？')) return;
-    delete data.characterLevelUps[charId];
+    delete data.characterLevelUps[name];
     saveData();
     renderMaterials();
 }
 
-function setLevelUpNeed(charId, material, value) {
-    const needs = data.characterLevelUps[charId];
+function setLevelUpNeed(name, material, value) {
+    const needs = data.characterLevelUps[name];
     const n = toCount(value);
     if (n > 0) {
         needs[material] = n;
@@ -28,19 +28,20 @@ function setLevelUpNeed(charId, material, value) {
     renderMaterials();
 }
 
-function addLevelUpNeed(charId) {
-    const material = document.getElementById(`need-material-${charId}`).value;
-    const n = toCount(document.getElementById(`need-count-${charId}`).value);
+// index は CHARACTERS 内の位置（入力欄の id に使う）
+function addLevelUpNeed(name, index) {
+    const material = document.getElementById(`need-material-${index}`).value;
+    const n = toCount(document.getElementById(`need-count-${index}`).value);
     if (!material || n === 0) return;
-    setLevelUpNeed(charId, material, n);
+    setLevelUpNeed(name, material, n);
 }
 
 // 育成完了：必要素材を在庫から差し引いて、トラッキングを終える
-function completeLevelUp(charId) {
-    const needs = data.characterLevelUps[charId];
+function completeLevelUp(name) {
+    const needs = data.characterLevelUps[name];
     if (!confirm('必要素材を在庫から差し引いて、トラッキングを終了しますか？')) return;
     for (const [m, n] of Object.entries(needs)) data.inventory[m] = Math.max(0, getCount(m) - n);
-    delete data.characterLevelUps[charId];
+    delete data.characterLevelUps[name];
     saveData();
     renderMaterials();
 }
@@ -53,16 +54,16 @@ function progressOf(needs) {
 }
 
 // 全キャラ分の必要数をまとめ、足りない合成素材はレシピの材料に展開する（1段階）
-function shortageSummary(trackedIds) {
+function shortageSummary(trackedNames) {
     const direct = {};
-    trackedIds.forEach(id => {
-        for (const [m, n] of Object.entries(data.characterLevelUps[id])) direct[m] = (direct[m] || 0) + n;
+    trackedNames.forEach(name => {
+        for (const [m, n] of Object.entries(data.characterLevelUps[name])) direct[m] = (direct[m] || 0) + n;
     });
     const forCrafting = {};
     for (const [m, n] of Object.entries(direct)) {
         const short = n - getCount(m);
-        const recipe = data.recipes[m];
-        if (short > 0 && recipe && Object.keys(recipe).length > 0) {
+        const recipe = recipeOf(m);
+        if (short > 0 && recipe) {
             for (const [src, per] of Object.entries(recipe)) forCrafting[src] = (forCrafting[src] || 0) + per * short;
         }
     }
@@ -75,21 +76,22 @@ function shortageSummary(trackedIds) {
 
 function renderMaterials() {
     const chars = allCharacters();
-    const trackedIds = chars.map(c => c.id).filter(id => data.characterLevelUps[id]);
-    const untracked = chars.filter(c => !data.characterLevelUps[c.id]);
+    const trackedNames = chars.map(c => c.name).filter(name => data.characterLevelUps[name]);
+    // 追加できるのは、所持していて、まだ追加していないキャラ
+    const candidates = chars.filter(c => getProgress(c.name).owned && !data.characterLevelUps[c.name]);
     const materials = allMaterials();
 
     // キャラの追加
     let html = `<div class="stage-row">
         <div class="stage-name">育成するキャラを追加</div>`;
     if (chars.length === 0) {
-        html += '<div class="empty">キャラ一覧タブでキャラを登録してください</div>';
-    } else if (untracked.length === 0) {
-        html += '<div class="empty">すべてのキャラを追加済みです</div>';
+        html += '<div class="empty">js/master/characters.js にキャラを登録してください</div>';
+    } else if (candidates.length === 0) {
+        html += '<div class="empty">追加できるキャラがいません（キャラ一覧タブで「所持」にチェックを入れると選べます）</div>';
     } else {
         html += `<div class="add-material" style="margin-bottom: 0;">
             <select id="track-char" style="flex: 1;">
-                ${untracked.map(c => `<option value="${c.id}">${escapeHtml(c.name)}${c.needsUpgrade ? '（強化待ち）' : ''}</option>`).join('')}
+                ${candidates.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}${getProgress(c.name).needsUpgrade ? '（強化待ち）' : ''}</option>`).join('')}
             </select>
             <button onclick="startTracking()">追加</button>
         </div>`;
@@ -97,7 +99,7 @@ function renderMaterials() {
     html += '</div>';
 
     // 不足まとめ
-    const summary = shortageSummary(trackedIds);
+    const summary = shortageSummary(trackedNames);
     html += '<div class="section-title">不足まとめ（全キャラ合計）</div>';
     if (summary.length === 0) {
         html += '<div class="empty" style="margin-bottom: 20px;">必要素材が登録されていません</div>';
@@ -117,19 +119,19 @@ function renderMaterials() {
 
     // キャラごと
     html += '<div class="section-title">キャラごとの必要素材</div>';
-    if (trackedIds.length === 0) {
+    if (trackedNames.length === 0) {
         html += '<div class="empty">上でキャラを追加してください</div>';
     }
     html += '<div class="grid">';
-    trackedIds.forEach(id => {
-        const char = chars.find(c => c.id === id);
-        const needs = data.characterLevelUps[id];
+    trackedNames.forEach(name => {
+        const index = chars.findIndex(c => c.name === name);
+        const needs = data.characterLevelUps[name];
         const progress = progressOf(needs);
         const ready = Object.keys(needs).length > 0 && progress === 100;
         html += `<div class="card">
             <div class="material-header">
-                <div class="card-title" style="margin-bottom: 0;">${escapeHtml(char.name)}</div>
-                <button class="danger small" onclick="stopTracking(${id})">外す</button>
+                <div class="card-title" style="margin-bottom: 0;">${escapeHtml(name)}</div>
+                <button class="danger small" onclick="stopTracking(${jsArg(name)})">外す</button>
             </div>
             <div class="stat-row"><span>達成率</span><span class="stat-value">${progress}%</span></div>
             <div class="progress-bar char-progress" style="margin-bottom: 12px;"><div class="progress-fill" style="width: ${progress}%;"></div></div>
@@ -138,18 +140,18 @@ function renderMaterials() {
                     <span>${escapeHtml(m)}</span>
                     <span class="input-wrapper">
                         <span class="${getCount(m) >= n ? 'enough' : 'shortage'}" style="font-size: 12px;">${getCount(m)} /</span>
-                        <input type="number" min="0" value="${n}" style="width: 60px; padding: 4px 6px;" onchange="setLevelUpNeed(${id}, ${jsArg(m)}, this.value)">
+                        <input type="number" min="0" value="${n}" style="width: 60px; padding: 4px 6px;" onchange="setLevelUpNeed(${jsArg(name)}, ${jsArg(m)}, this.value)">
                     </span>
                 </div>
             `).join('')}
             <div class="input-wrapper" style="margin-top: 8px;">
-                <select id="need-material-${id}" style="flex: 1; padding: 4px 6px; font-size: 12px;">
+                <select id="need-material-${index}" style="flex: 1; padding: 4px 6px; font-size: 12px;">
                     ${materials.filter(m => !needs[m]).map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('')}
                 </select>
-                <input type="number" id="need-count-${id}" min="0" placeholder="数" style="width: 60px; padding: 4px 6px;">
-                <button class="small" onclick="addLevelUpNeed(${id})">追加</button>
+                <input type="number" id="need-count-${index}" min="0" placeholder="数" style="width: 60px; padding: 4px 6px;">
+                <button class="small" onclick="addLevelUpNeed(${jsArg(name)}, ${index})">追加</button>
             </div>
-            ${ready ? `<button style="width: 100%; margin-top: 12px;" onclick="completeLevelUp(${id})">育成完了（在庫から差し引く）</button>` : ''}
+            ${ready ? `<button style="width: 100%; margin-top: 12px;" onclick="completeLevelUp(${jsArg(name)})">育成完了（在庫から差し引く）</button>` : ''}
         </div>`;
     });
     html += '</div>';

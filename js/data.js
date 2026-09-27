@@ -1,37 +1,43 @@
 // データ構造・保存（localStorage）
-// 全ファイルから参照するため、最初に読み込む
+// ここに保存するのは自分の育成状況だけ。キャラと素材の一覧は js/master/ にある
 
 // ===== データ構造 =====
 const INITIAL_DATA = {
-    characters: { rare: [], unrevealed: [] },
-    materialCategories: {
-        'ドロップ素材': ['金', '銀', '鋼', '刀彩'],
-        '合成素材': [],
-        '貴重素材': []
-    },
-    recipes: {},
-    characterLevelUps: {},
-    stageDrops: {},
-    inventory: {},
-    runs: []
+    characterProgress: {},   // { キャラ名: { owned, needsUpgrade, breakthrough, trustLevel } }
+    characterLevelUps: {},   // { キャラ名: { 素材名: 必要数 } }
+    stageDrops: {},          // { ステージ名: [落ちる素材名] }
+    inventory: {},           // { 素材名: 所持数 }
+    runs: []                 // 周回記録
 };
 
 // ===== データ管理 =====
 function validateData(savedData) {
-    if (!savedData.characters) savedData.characters = { rare: [], unrevealed: [] };
-    if (!savedData.recipes) savedData.recipes = {};
+    if (!savedData.characterProgress) savedData.characterProgress = {};
     if (!savedData.characterLevelUps) savedData.characterLevelUps = {};
     if (!savedData.stageDrops) savedData.stageDrops = {};
     if (!savedData.inventory) savedData.inventory = {};
     if (!Array.isArray(savedData.runs)) savedData.runs = [];
 
-    if (!savedData.materialCategories || typeof savedData.materialCategories !== 'object') {
-        savedData.materialCategories = {
-            'ドロップ素材': ['金', '銀', '鋼', '刀彩'],
-            '合成素材': [],
-            '貴重素材': []
-        };
+    // 旧形式（キャラを画面から追加していた頃）のデータを、キャラ名で保存する形に変換する
+    if (savedData.characters) {
+        const oldChars = [...(savedData.characters.rare || []), ...(savedData.characters.unrevealed || [])];
+        oldChars.forEach(c => {
+            savedData.characterProgress[c.name] = {
+                owned: true,
+                needsUpgrade: !!c.needsUpgrade,
+                breakthrough: c.breakthrough || 0,
+                trustLevel: c.trustLevel || 0
+            };
+            if (savedData.characterLevelUps[c.id]) {
+                savedData.characterLevelUps[c.name] = savedData.characterLevelUps[c.id];
+                delete savedData.characterLevelUps[c.id];
+            }
+        });
+        delete savedData.characters;
     }
+    // 素材の分類と合成レシピは js/master/materials.js に移った
+    delete savedData.materialCategories;
+    delete savedData.recipes;
 
     return savedData;
 }
