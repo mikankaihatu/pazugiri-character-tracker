@@ -5,6 +5,21 @@ function startTracking() {
     const name = document.getElementById('track-char').value;
     if (!name) return;
     data.characterLevelUps[name] = data.characterLevelUps[name] || {};
+    // 次の上限突破の素材が固定データにあれば、最初からセットしておく
+    if (nextLimitBreak(name)) {
+        applyLimitBreak(name);
+        return;
+    }
+    saveData();
+    renderMaterials();
+}
+
+// 次の上限突破の必要素材を、そのキャラの必要素材にセットする（今の内容は置き換える）
+function applyLimitBreak(name) {
+    const lb = nextLimitBreak(name);
+    if (!lb) return;
+    data.characterLevelUps[name] = { ...lb.materials };
+    data.levelUpTargets[name] = lb.to;
     saveData();
     renderMaterials();
 }
@@ -12,6 +27,7 @@ function startTracking() {
 function stopTracking(name) {
     if (!confirm('このキャラの必要素材を削除しますか？')) return;
     delete data.characterLevelUps[name];
+    delete data.levelUpTargets[name];
     saveData();
     renderMaterials();
 }
@@ -37,10 +53,17 @@ function addLevelUpNeed(name, index) {
 }
 
 // 育成完了：必要素材を在庫から差し引いて、トラッキングを終える
+// 上限突破の素材をセットしていた場合は、レベル上限も上げる
 function completeLevelUp(name) {
     const needs = data.characterLevelUps[name];
-    if (!confirm('必要素材を在庫から差し引いて、トラッキングを終了しますか？')) return;
+    const target = data.levelUpTargets[name];
+    const message = target
+        ? `必要素材を在庫から差し引いて、レベル上限を Lv${target} にしますか？`
+        : '必要素材を在庫から差し引いて、トラッキングを終了しますか？';
+    if (!confirm(message)) return;
     for (const [m, n] of Object.entries(needs)) data.inventory[m] = Math.max(0, getCount(m) - n);
+    if (target) setProgress(name, { levelCap: target });
+    delete data.levelUpTargets[name];
     delete data.characterLevelUps[name];
     saveData();
     renderMaterials();
@@ -72,6 +95,20 @@ function shortageSummary(trackedNames) {
         const need = (direct[m] || 0) + (forCrafting[m] || 0);
         return { material: m, need, crafting: forCrafting[m] || 0, have: getCount(m), short: Math.max(0, need - getCount(m)) };
     });
+}
+
+// レベル上限と、次の上限突破の素材をセットするボタン
+function renderLimitBreakLine(name) {
+    const cap = getProgress(name).levelCap;
+    const target = data.levelUpTargets[name];
+    const lb = nextLimitBreak(name);
+    let right = '';
+    if (target) {
+        right = `<span class="stat-value">Lv${cap}→${target} の素材</span>`;
+    } else if (lb) {
+        right = `<button class="small secondary" onclick="applyLimitBreak(${jsArg(name)})">Lv${lb.from}→${lb.to} の素材をセット</button>`;
+    }
+    return `<div class="stat-row" style="align-items: center;"><span>レベル上限 Lv${cap}</span>${right}</div>`;
 }
 
 function renderMaterials() {
@@ -133,6 +170,7 @@ function renderMaterials() {
                 <div class="card-title" style="margin-bottom: 0;">${escapeHtml(charLabel(name))}</div>
                 <button class="danger small" onclick="stopTracking(${jsArg(name)})">外す</button>
             </div>
+            ${renderLimitBreakLine(name)}
             <div class="stat-row"><span>達成率</span><span class="stat-value">${progress}%</span></div>
             <div class="progress-bar char-progress" style="margin-bottom: 12px;"><div class="progress-fill" style="width: ${progress}%;"></div></div>
             ${Object.entries(needs).map(([m, n]) => `
@@ -151,7 +189,7 @@ function renderMaterials() {
                 <input type="number" id="need-count-${index}" min="0" placeholder="数" style="width: 60px; padding: 4px 6px;">
                 <button class="small" onclick="addLevelUpNeed(${jsArg(name)}, ${index})">追加</button>
             </div>
-            ${ready ? `<button style="width: 100%; margin-top: 12px;" onclick="completeLevelUp(${jsArg(name)})">育成完了（在庫から差し引く）</button>` : ''}
+            ${ready ? `<button style="width: 100%; margin-top: 12px;" onclick="completeLevelUp(${jsArg(name)})">${data.levelUpTargets[name] ? `上限突破完了（Lv${data.levelUpTargets[name]}へ・在庫から差し引く）` : '育成完了（在庫から差し引く）'}</button>` : ''}
         </div>`;
     });
     html += '</div>';

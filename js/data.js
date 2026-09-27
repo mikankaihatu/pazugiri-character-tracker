@@ -3,8 +3,9 @@
 
 // ===== データ構造 =====
 const INITIAL_DATA = {
-    characterProgress: {},   // { キャラ名: { owned, needsUpgrade, breakthrough, trustLevel } }
+    characterProgress: {},   // { キャラ名: { owned, needsUpgrade, breakthrough, trustLevel, levelCap } }
     characterLevelUps: {},   // { キャラ名: { 素材名: 必要数 } }
+    levelUpTargets: {},      // { キャラ名: 上限突破後のレベル上限 }（上限突破の素材をセットしたとき）
     inventory: {},           // { 素材名: 所持数 }
     runs: []                 // 周回記録
 };
@@ -13,6 +14,7 @@ const INITIAL_DATA = {
 function validateData(savedData) {
     if (!savedData.characterProgress) savedData.characterProgress = {};
     if (!savedData.characterLevelUps) savedData.characterLevelUps = {};
+    if (!savedData.levelUpTargets) savedData.levelUpTargets = {};
     if (!savedData.inventory) savedData.inventory = {};
     if (!Array.isArray(savedData.runs)) savedData.runs = [];
 

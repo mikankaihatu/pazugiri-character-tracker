@@ -84,6 +84,12 @@ function showCharEditDialog(name) {
             <label><input type="checkbox" id="edit-needsUpgrade" ${p.needsUpgrade ? 'checked' : ''} style="margin-right: 8px;">強化待ち</label>
         </div>
         <div style="margin-bottom: 12px;">
+            <label style="display: block; font-size: 12px; margin-bottom: 4px; color: #666;">レベル上限</label>
+            <select id="edit-levelCap" style="width: 100%;">
+                ${levelCapOptions().map(n => `<option value="${n}" ${p.levelCap === n ? 'selected' : ''}>Lv${n}</option>`).join('')}
+            </select>
+        </div>
+        <div style="margin-bottom: 12px;">
             <label style="display: block; font-size: 12px; margin-bottom: 4px; color: #666;">限界突破</label>
             <select id="edit-breakthrough" style="width: 100%;">
                 ${[0, 1, 2, 3, 4, 5, 6].map(n => `<option value="${n}" ${p.breakthrough === n ? 'selected' : ''}>${n === 0 ? 'なし' : '限界突破' + n}</option>`).join('')}
@@ -91,7 +97,7 @@ function showCharEditDialog(name) {
         </div>
         <div style="margin-bottom: 16px;">
             <label style="display: block; font-size: 12px; margin-bottom: 4px; color: #666;">信頼度</label>
-            <input type="number" id="edit-trustLevel" value="${p.trustLevel}" min="0" max="100" style="width: 100%;">
+            <input type="number" id="edit-trustLevel" value="${p.trustLevel}" min="0" max="${MAX_TRUST_LEVEL}" style="width: 100%;">
         </div>
         <div style="display: flex; gap: 8px; justify-content: flex-end;">
             <button class="secondary" onclick="closeCharEditDialog()">キャンセル</button>
@@ -116,6 +122,11 @@ function renderCharInfo(char) {
         ${row('奥義数値', escapeHtml(char.skillValue ?? ''))}
         ${skills.length > 0 ? `<div class="sub-title" style="margin-top: 12px;">奥義</div>
             ${skills.map(([lv, text]) => `<div style="font-size: 12px; color: #666; margin-bottom: 6px;"><span class="stat-value">Lv${lv}</span>　${escapeHtml(text)}</div>`).join('')}` : ''}
+        ${(char.limitBreaks || []).length > 0 ? `<div class="sub-title" style="margin-top: 12px;">上限突破の必要素材</div>
+            ${char.limitBreaks.map(lb => `<div style="font-size: 12px; color: #666; margin-bottom: 6px;">
+                <span class="stat-value">Lv${lb.from}→${lb.to}</span>　${Object.entries(lb.materials).map(([m, n]) =>
+                    `${escapeHtml(m)}×${n}<span class="${getCount(m) >= n ? 'enough' : 'shortage'}">（所持${getCount(m)}）</span>`).join('、')}
+            </div>`).join('')}` : ''}
         ${levels.length > 0 ? `<div class="sub-title" style="margin-top: 12px;">能力</div>
             <table class="stat-table">
                 <tr><th>Lv</th><th>体力</th><th>攻撃</th></tr>
@@ -129,7 +140,8 @@ function saveCharProgress(name) {
         owned: document.getElementById('edit-owned').checked,
         needsUpgrade: document.getElementById('edit-needsUpgrade').checked,
         breakthrough: parseInt(document.getElementById('edit-breakthrough').value) || 0,
-        trustLevel: toCount(document.getElementById('edit-trustLevel').value)
+        trustLevel: Math.min(MAX_TRUST_LEVEL, toCount(document.getElementById('edit-trustLevel').value)),
+        levelCap: parseInt(document.getElementById('edit-levelCap').value) || 10
     });
     closeCharEditDialog();
     renderCharacters();
@@ -185,7 +197,7 @@ function renderCharFilters() {
             </div>
             <div>
                 <label class="filter-label">信頼度（以上）</label>
-                <input type="number" id="filter-trustLevel" min="0" max="100" placeholder="0-100" value="${escapeHtml(filters.trustLevel)}" style="width: 100%; font-size: 12px;" onchange="applyFilters()">
+                <input type="number" id="filter-trustLevel" min="0" max="${MAX_TRUST_LEVEL}" placeholder="0-${MAX_TRUST_LEVEL}" value="${escapeHtml(filters.trustLevel)}" style="width: 100%; font-size: 12px;" onchange="applyFilters()">
             </div>
             <div style="display: flex; align-items: flex-end;">
                 <label style="font-size: 12px;"><input type="checkbox" id="filter-needsUpgrade" ${filters.needsUpgrade ? 'checked' : ''} onchange="applyFilters()" style="margin-right: 4px;">強化待ち</label>
@@ -210,6 +222,7 @@ function renderCharCard(char) {
                     ${color ? badge(color.bg, color.icon) : ''}
                     ${p.needsUpgrade ? badge('#fff3e0', '🔧 強化待ち') : ''}
                     ${p.breakthrough > 0 ? badge('#f3e5f5', `⭐ 限界${p.breakthrough}`) : ''}
+                    ${p.levelCap > 10 ? badge('#e0f2f1', `🔓 Lv上限${p.levelCap}`) : ''}
                     ${p.trustLevel > 0 ? badge('#f0f4c3', `💖 ${p.trustLevel}`) : ''}
                 </div>
             </div>

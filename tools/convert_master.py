@@ -6,7 +6,8 @@
 
 Excel のシート:
     キャラクター名 : 刀剣男士番号 / 刀剣男士 / 衣装 / レア / 刀種類 / ゆかり / 奥義色 / 奥義数値 /
-                     奥義lv1説明文 … 奥義lv5説明文 / 1lv[体力,攻撃] … 30lv[体力,攻撃]
+                     奥義lv1説明文 … 奥義lv5説明文 / 1lv[体力,攻撃] … 30lv[体力,攻撃] /
+                     上限突破10→20 / 上限突破20→30 / 上限突破30→35（[お花,3][葉っぱ,2] の形。列を足せば 35→40 なども読める）
     素材           : 分類 / 名前 / 入手方法
     合成レシピ     : 名前 / 必要素材,個数（[木の枝,1][丸太,1] の形）
     ステージドロップ品 : ステージ名 / 落ちる品 / 落ちる品 / …（見出し行なし。1行に1ステージ）
@@ -98,6 +99,9 @@ def read_characters(ws):
     # 「奥義lv1説明文」…「奥義lv5説明文」と「1lv[体力,攻撃]」…「30lv[体力,攻撃]」の列（増えても読めるようにする）
     skill_cols = {int(m.group(1)): i for i, h in enumerate(headers) if (m := re.match(r'^奥義lv(\d+)', h))}
     level_cols = {int(m.group(1)): i for i, h in enumerate(headers) if (m := re.match(r'^(\d+)lv', h))}
+    # 「上限突破10→20」などの列（→ / -> / ～ のどれでもよい）
+    limit_cols = [(int(m.group(1)), int(m.group(2)), i) for i, h in enumerate(headers)
+                  if (m := re.match(r'^上限突破\s*(\d+)\s*(?:→|->|～|~)\s*(\d+)', h))]
 
     characters = []
     for row_number, row in enumerate(rows[1:], start=2):
@@ -114,6 +118,15 @@ def read_characters(ws):
             if stat:
                 levels[str(lv)] = stat
         skills = {str(lv): text(row[i]) for lv, i in skill_cols.items() if text(row[i])}
+        # [{ from: 10, to: 20, materials: { 素材名: 個数 } }]（書いてある段階だけ）
+        limit_breaks = []
+        for lv_from, lv_to, i in limit_cols:
+            pairs = parse_pairs(row[i])
+            if text(row[i]) and not pairs:
+                warnings.append(f'{row_number}行目 {base} 上限突破{lv_from}→{lv_to}: 「{text(row[i])}」は [素材名,個数] の形になっていません')
+            if pairs:
+                limit_breaks.append({'from': lv_from, 'to': lv_to,
+                                     'materials': {src: to_number(n) for src, n in pairs}})
         skill_value = row[col['skillValue']]
         no = row[col['no']]
         characters.append({
@@ -128,6 +141,7 @@ def read_characters(ws):
             'skillValue': to_number(skill_value) if isinstance(skill_value, (int, float)) else text(skill_value),
             'skills': skills,
             'levels': levels,
+            'limitBreaks': limit_breaks,
         })
     return characters
 

@@ -89,8 +89,25 @@ function yukariOf(char) {
     return char.yukari ? [char.yukari] : [];
 }
 
+const MAX_TRUST_LEVEL = 10;
+
 function getProgress(name) {
-    return { owned: false, needsUpgrade: false, breakthrough: 0, trustLevel: 0, ...data.characterProgress[name] };
+    return { owned: false, needsUpgrade: false, breakthrough: 0, trustLevel: 0, levelCap: 10, ...data.characterProgress[name] };
+}
+
+// ===== レベル上限（上限突破） =====
+// 選べるレベル上限：10 と、固定データにある上限突破後のレベル（20 / 30 / 35 …）
+function levelCapOptions() {
+    const caps = new Set([10, 20, 30, 35]);
+    CHARACTERS.forEach(c => (c.limitBreaks || []).forEach(lb => { caps.add(lb.from); caps.add(lb.to); }));
+    return [...caps].sort((a, b) => a - b);
+}
+
+// 今のレベル上限から次に行う上限突破（なければ null）
+function nextLimitBreak(name) {
+    const char = CHARACTERS.find(c => c.name === name);
+    const cap = getProgress(name).levelCap;
+    return (char && (char.limitBreaks || []).find(lb => lb.from === cap)) || null;
 }
 
 function setProgress(name, changes) {
@@ -140,6 +157,9 @@ function checkMasterData() {
         numberOf[c.base] = numberOf[c.base] ?? c.no;
         baseOf[c.no] = baseOf[c.no] ?? c.base;
     });
+    CHARACTERS.forEach(c => (c.limitBreaks || []).forEach(lb => Object.keys(lb.materials).forEach(m => {
+        if (!names.includes(m)) errors.push(`キャラ「${c.name}」の上限突破${lb.from}→${lb.to}にある「${m}」は素材に登録されていません`);
+    })));
     CHARACTERS.forEach(c => {
         if (c.secretColor && !['赤', '青', '黄'].includes(c.secretColor)) {
             errors.push(`キャラ「${c.name}」の奥義色「${c.secretColor}」は 赤 / 青 / 黄 のどれかにしてください`);
