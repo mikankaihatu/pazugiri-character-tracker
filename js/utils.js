@@ -183,6 +183,20 @@ function nextLimitBreak(name) {
     return (char && (char.limitBreaks || []).find(lb => lb.from === cap)) || null;
 }
 
+// 今のレベルからレベル上限までに必要な経験値の合計（途中のレベルの経験値が1つでも不明なら null）
+function expToLevelCap(name) {
+    const char = CHARACTERS.find(c => c.name === name);
+    const { level, levelCap } = getProgress(name);
+    if (!char || level >= levelCap) return null;
+    let total = 0;
+    for (let lv = level; lv < levelCap; lv++) {
+        const stat = (char.levels || {})[lv];
+        if (!stat || stat[2] === undefined) return null;
+        total += stat[2];
+    }
+    return total;
+}
+
 function setProgress(name, changes) {
     data.characterProgress[name] = { ...getProgress(name), ...changes };
     saveData();

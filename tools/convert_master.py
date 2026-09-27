@@ -6,7 +6,7 @@
 
 Excel のシート:
     キャラクター名 : 刀剣男士番号 / 刀剣男士 / 衣装 / レア / 刀種類 / ゆかり / 奥義色 / 奥義数値 / 奥義名 /
-                     奥義lv1説明文 … 奥義lv5説明文 / 1lv[体力,攻撃] … 30lv[体力,攻撃] /
+                     奥義lv1説明文 … 奥義lv5説明文 / 1lv[体力,攻撃,次レベル必要経験値] … 40lv[…] /
                      上限突破10→20 / 上限突破20→30 / 上限突破30→35（お花3,葉っぱ2 または [お花,3][葉っぱ,2] の形。列を足せば 35→40 なども読める）
     素材           : 分類 / 名前 / 入手方法 / 効果
     合成レシピ     : 名前 / 必要素材,個数（[木の枝,1][丸太,1] または 木の枝1,丸太1 の形）
@@ -15,7 +15,7 @@ Excel のシート:
 
 刀剣男士が空の行は読み飛ばす。レアの列は、何か書いてあればレアとして扱う（○ など）。
 ゆかりは「夜,天下五剣」のようにカンマ区切りで複数書ける。
-能力は「740,77」または「[740,77]」の形（空のレベルは飛ばしてよい）。
+能力は「740,77」「[740,77]」、次レベルまでの経験値もあれば「1543,229,30000」の形（空のレベルは飛ばしてよい）。
 アプリで記録を保存するときの名前は「刀剣男士-衣装」、レアなら「刀剣男士-衣装-レア」になる。
 """
 
@@ -60,16 +60,18 @@ notes = []      # まだ埋まっていないところ（読み飛ばしては�
 
 
 def parse_stat(value, where):
-    """能力のセル（'740,77' / '[740,77]'）を [740, 77] にする。空なら None"""
+    """能力のセルを [体力, 攻撃] または [体力, 攻撃, 次レベル必要経験値] にする。空なら None
+        '740,77' / '[740,77]' / '1543,229,30000' のどれでもよい
+    """
     if value is None or text(value) == '':
         return None
     if isinstance(value, (int, float)):
         # Excel が「1060,140」を 1,060,140 という数値に変えてしまった場合
-        warnings.append(f'{where}: 「{value}」が数値になっています。セルの書式を「文字列」にして「体力,攻撃」の形で入れ直してください')
+        warnings.append(f'{where}: 「{value}」が数値になっています。セルの書式を「文字列」にして「体力,攻撃,次レベル必要経験値」の形で入れ直してください')
         return None
     parts = [p.strip() for p in re.split(r'[,、，]', text(value).strip('[]［］ '))]
-    if len(parts) != 2 or not all(re.fullmatch(r'\d+(\.\d+)?', p) for p in parts):
-        warnings.append(f'{where}: 「{value}」は「体力,攻撃」の形になっていません')
+    if len(parts) not in (2, 3) or not all(re.fullmatch(r'\d+(\.\d+)?', p) for p in parts):
+        warnings.append(f'{where}: 「{value}」は「体力,攻撃」か「体力,攻撃,次レベル必要経験値」の形になっていません')
         return None
     return [to_number(p) for p in parts]
 
@@ -165,7 +167,7 @@ def read_characters(ws):
             'skillValue': to_number(skill_value) if isinstance(skill_value, (int, float)) else text(skill_value),
             'skillName': text(row[skill_name_col]) if skill_name_col is not None else '',
             'skills': skills,
-            'levels': levels,
+            'levels': levels,   # { レベル: [体力, 攻撃] または [体力, 攻撃, 次レベル必要経験値] }
             'limitBreaks': limit_breaks,
         })
     return characters
