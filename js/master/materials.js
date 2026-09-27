@@ -45,4 +45,8 @@ const MATERIALS = [
     {"name": "赤の絵具", "category": "贈物", "source": "イベント", "effect": "強化素材"},
     {"name": "青の絵具", "category": "贈物", "source": "イベント", "effect": "強化素材"},
     {"name": "黄の絵具", "category": "贈物", "source": "イベント", "effect": "強化素材"},
+    {"name": "真珠貝", "category": "贈物", "source": "ドロップ"},
+    {"name": "カニのはさみ", "category": "贈物", "source": "ドロップ"},
+    {"name": "ウロコ", "category": "贈物", "source": "ドロップ"},
+    {"name": "羽衣", "category": "贈物", "source": "ドロップ"},
 ];
