@@ -5,11 +5,14 @@
     python3 tools/convert_master.py
 
 Excel のシート:
-    キャラクター名 : 刀剣男士番号 / 刀剣男士 / 衣装 / レア / 刀種類 / ゆかり / 奥義色(赤,黄,青) / 奥義lv1説明文 / 1lv[体力,攻撃] / 2lv / 3lv ...
+    キャラクター名 : 刀剣男士番号 / 刀剣男士 / 衣装 / レア / 刀種類 / ゆかり / 奥義色 / 奥義数値 /
+                     奥義lv1説明文 … 奥義lv5説明文 / 1lv[体力,攻撃] … 30lv[体力,攻撃]
     素材           : 分類 / 名前 / 入手方法
     合成レシピ     : 名前 / 必要素材,個数（[木の枝,1][丸太,1] の形）
 
 刀剣男士が空の行は読み飛ばす。レアの列は、何か書いてあればレアとして扱う（○ など）。
+ゆかりは「夜,天下五剣」のようにカンマ区切りで複数書ける。
+能力は「740,77」または「[740,77]」の形（空のレベルは飛ばしてよい）。
 アプリで記録を保存するときの名前は「刀剣男士-衣装」、レアなら「刀剣男士-衣装-レア」になる。
 """
 
@@ -48,6 +51,28 @@ def parse_pairs(value):
     return [[p.strip() for p in m.split(',')] for m in re.findall(r'\[([^\]]*)\]', text(value))]
 
 
+warnings = []
+
+
+def parse_stat(value, where):
+    """能力のセル（'740,77' / '[740,77]'）を [740, 77] にする。空なら None"""
+    if value is None or text(value) == '':
+        return None
+    if isinstance(value, (int, float)):
+        # Excel が「1060,140」を 1,060,140 という数値に変えてしまった場合
+        warnings.append(f'{where}: 「{value}」が数値になっています。セルの書式を「文字列」にして「体力,攻撃」の形で入れ直してください')
+        return None
+    parts = [p.strip() for p in re.split(r'[,、，]', text(value).strip('[]［］ '))]
+    if len(parts) != 2 or not all(re.fullmatch(r'\d+(\.\d+)?', p) for p in parts):
+        warnings.append(f'{where}: 「{value}」は「体力,攻撃」の形になっていません')
+        return None
+    return [to_number(p) for p in parts]
+
+
+def split_list(value):
+    return [p.strip() for p in re.split(r'[,、，]', text(value)) if p.strip()]
+
+
 def to_number(value):
     try:
         return int(value)
@@ -66,24 +91,28 @@ def read_characters(ws):
         'swordType': find_column(headers, '刀種類'),
         'yukari': find_column(headers, 'ゆかり'),
         'secretColor': find_column(headers, '奥義色'),
-        'skill': find_column(headers, '説明'),
+        'skillValue': find_column(headers, '奥義数値'),
     }
-    # 「1lv[体力,攻撃]」「2lv」「3lv」… の列（増えても読めるようにする）
-    level_cols = [i for i, h in enumerate(headers) if re.match(r'^\d+lv', h)]
+    # 「奥義lv1説明文」…「奥義lv5説明文」と「1lv[体力,攻撃]」…「30lv[体力,攻撃]」の列（増えても読めるようにする）
+    skill_cols = {int(m.group(1)): i for i, h in enumerate(headers) if (m := re.match(r'^奥義lv(\d+)', h))}
+    level_cols = {int(m.group(1)): i for i, h in enumerate(headers) if (m := re.match(r'^(\d+)lv', h))}
 
     characters = []
-    for row in rows[1:]:
+    for row_number, row in enumerate(rows[1:], start=2):
         base = text(row[col['base']])
         if not base:
             continue
         costume = text(row[col['costume']])
         rare = text(row[col['rare']]) != ''
         name = '-'.join(p for p in [base, costume, 'レア' if rare else ''] if p)
-        levels = []
-        for i in level_cols:
-            pairs = parse_pairs(row[i])
-            if pairs and len(pairs[0]) == 2 and all(pairs[0]):
-                levels.append([to_number(v) for v in pairs[0]])
+        # { レベル: [体力, 攻撃] }（書いてあるレベルだけ）
+        levels = {}
+        for lv, i in level_cols.items():
+            stat = parse_stat(row[i], f'{row_number}行目 {base} {lv}lv')
+            if stat:
+                levels[str(lv)] = stat
+        skills = {str(lv): text(row[i]) for lv, i in skill_cols.items() if text(row[i])}
+        skill_value = row[col['skillValue']]
         no = row[col['no']]
         characters.append({
             'no': int(no) if isinstance(no, (int, float)) else text(no),
@@ -92,9 +121,10 @@ def read_characters(ws):
             'costume': costume,
             'rarity': 'レア' if rare else '通常',
             'swordType': text(row[col['swordType']]),
-            'yukari': text(row[col['yukari']]),
+            'yukari': split_list(row[col['yukari']]),
             'secretColor': text(row[col['secretColor']]),
-            'skill': text(row[col['skill']]),
+            'skillValue': to_number(skill_value) if isinstance(skill_value, (int, float)) else text(skill_value),
+            'skills': skills,
             'levels': levels,
         })
     return characters
@@ -144,6 +174,10 @@ def main():
         encoding='utf-8')
 
     print(f'キャラ {len(characters)} 件、素材 {len(materials)} 件を書き出しました')
+    if warnings:
+        print(f'\n確認してほしいところが {len(warnings)} 件あります（この値は読み飛ばしました）:')
+        for w in warnings:
+            print('  - ' + w)
 
 
 if __name__ == '__main__':
