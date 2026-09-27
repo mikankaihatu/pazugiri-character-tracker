@@ -44,14 +44,6 @@ function setLevelUpNeed(name, material, value) {
     renderMaterials();
 }
 
-// index は CHARACTERS 内の位置（入力欄の id に使う）
-function addLevelUpNeed(name, index) {
-    const material = document.getElementById(`need-material-${index}`).value;
-    const n = toCount(document.getElementById(`need-count-${index}`).value);
-    if (!material || n === 0) return;
-    setLevelUpNeed(name, material, n);
-}
-
 // 育成完了：必要素材を在庫から差し引いて、トラッキングを終える
 // 上限突破の素材をセットしていた場合は、レベル上限も上げる
 function completeLevelUp(name) {
@@ -101,7 +93,6 @@ function renderMaterials() {
     const trackedNames = chars.map(c => c.name).filter(name => data.characterLevelUps[name]);
     // 追加できるのは、所持していて、まだ追加していないキャラ
     const candidates = chars.filter(c => getProgress(c.name).owned && !data.characterLevelUps[c.name]);
-    const materials = allMaterials();
 
     // キャラの追加
     let html = `<div class="stage-row">
@@ -149,7 +140,6 @@ function renderMaterials() {
     }
     html += '<div class="grid">';
     trackedNames.forEach(name => {
-        const index = chars.findIndex(c => c.name === name);
         const needs = data.characterLevelUps[name];
         const progress = progressOf(needs);
         const ready = Object.keys(needs).length > 0 && progress === 100;
@@ -171,13 +161,7 @@ function renderMaterials() {
                     </span>
                 </div>
             `).join('')}
-            <div class="input-wrapper" style="margin-top: 8px;">
-                <select id="need-material-${index}" style="flex: 1; padding: 4px 6px; font-size: 12px;">
-                    ${materials.filter(m => !needs[m]).map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('')}
-                </select>
-                <input type="number" id="need-count-${index}" min="0" placeholder="数" style="width: 60px; padding: 4px 6px;">
-                <button class="small" onclick="addLevelUpNeed(${jsArg(name)}, ${index})">追加</button>
-            </div>
+            ${Object.keys(needs).length === 0 ? '<div class="empty">上限突破の必要素材が Excel（キャラクター名シートの上限突破の列）にまだありません</div>' : ''}
             ${ready ? `<button style="width: 100%; margin-top: 12px;" onclick="completeLevelUp(${jsArg(name)})">${data.levelUpTargets[name] ? `上限突破完了（Lv${data.levelUpTargets[name]}へ・在庫から差し引く）` : '育成完了（在庫から差し引く）'}</button>` : ''}
         </div>`;
     });
