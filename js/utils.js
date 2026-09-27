@@ -126,9 +126,6 @@ function checkMasterData() {
         if (!MATERIAL_CATEGORIES.includes(m.category)) {
             errors.push(`素材「${m.name}」の category「${m.category}」は MATERIAL_CATEGORIES にありません`);
         }
-        if (m.source === '合成' && !recipeOf(m.name)) {
-            errors.push(`素材「${m.name}」は入手方法が「合成」ですが、合成レシピがありません`);
-        }
         Object.keys(m.recipe || {}).forEach(src => {
             if (!names.includes(src)) errors.push(`素材「${m.name}」のレシピにある「${src}」は素材に登録されていません`);
             if (src === m.name) errors.push(`素材「${m.name}」のレシピに自分自身が入っています`);

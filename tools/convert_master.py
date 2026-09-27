@@ -7,9 +7,9 @@
 Excel のシート:
     キャラクター名 : 刀剣男士番号 / 刀剣男士 / 衣装 / レア / 刀種類 / ゆかり / 奥義色 / 奥義数値 /
                      奥義lv1説明文 … 奥義lv5説明文 / 1lv[体力,攻撃] … 30lv[体力,攻撃] /
-                     上限突破10→20 / 上限突破20→30 / 上限突破30→35（[お花,3][葉っぱ,2] の形。列を足せば 35→40 なども読める）
+                     上限突破10→20 / 上限突破20→30 / 上限突破30→35（お花3,葉っぱ2 または [お花,3][葉っぱ,2] の形。列を足せば 35→40 なども読める）
     素材           : 分類 / 名前 / 入手方法
-    合成レシピ     : 名前 / 必要素材,個数（[木の枝,1][丸太,1] の形）
+    合成レシピ     : 名前 / 必要素材,個数（[木の枝,1][丸太,1] または 木の枝1,丸太1 の形）
     ステージドロップ品 : ステージ名 / 落ちる品 / 落ちる品 / …（見出し行なし。1行に1ステージ）
                          素材シートにない品は「[絵馬]塩おにぎり」のように [種類] を先頭につける
 
@@ -22,6 +22,7 @@ Excel のシート:
 import json
 import re
 import sys
+import unicodedata
 from pathlib import Path
 
 try:
@@ -54,7 +55,8 @@ def parse_pairs(value):
     return [[p.strip() for p in m.split(',')] for m in re.findall(r'\[([^\]]*)\]', text(value))]
 
 
-warnings = []
+warnings = []   # 読めなかった値（読み飛ばしたもの）
+notes = []      # まだ埋まっていないところ（読み飛ばしてはいない）
 
 
 def parse_stat(value, where):
@@ -74,6 +76,30 @@ def parse_stat(value, where):
 
 def split_list(value):
     return [p.strip() for p in re.split(r'[,、，]', text(value)) if p.strip()]
+
+
+def parse_materials(value, where):
+    """素材と個数のセルを { 素材名: 個数 } にする。次のどちらの書き方でもよい
+        [木の枝,1][丸太,1]
+        黄の絵具1,書き物道具2（「黄の絵具×1」「黄の絵具 1」、全角数字も可）
+    """
+    cell = text(value)
+    if not cell:
+        return {}
+    pairs = parse_pairs(cell)
+    if pairs:
+        return {src: to_number(n) for src, n in pairs}
+    result = {}
+    for part in re.split(r'[,、，\n]', cell):
+        part = part.strip()
+        if not part:
+            continue
+        m = re.fullmatch(r'(.+?)\s*[×xX*＊]?\s*([0-9０-９]+)', part)
+        if not m:
+            warnings.append(f'{where}: 「{part}」に個数がありません（「黄の絵具1」のように素材名のあとに数を書いてください）')
+            continue
+        result[m.group(1).strip()] = int(unicodedata.normalize('NFKC', m.group(2)))
+    return result
 
 
 def to_number(value):
@@ -121,12 +147,9 @@ def read_characters(ws):
         # [{ from: 10, to: 20, materials: { 素材名: 個数 } }]（書いてある段階だけ）
         limit_breaks = []
         for lv_from, lv_to, i in limit_cols:
-            pairs = parse_pairs(row[i])
-            if text(row[i]) and not pairs:
-                warnings.append(f'{row_number}行目 {base} 上限突破{lv_from}→{lv_to}: 「{text(row[i])}」は [素材名,個数] の形になっていません')
-            if pairs:
-                limit_breaks.append({'from': lv_from, 'to': lv_to,
-                                     'materials': {src: to_number(n) for src, n in pairs}})
+            materials = parse_materials(row[i], f'{row_number}行目 {base} 上限突破{lv_from}→{lv_to}')
+            if materials:
+                limit_breaks.append({'from': lv_from, 'to': lv_to, 'materials': materials})
         skill_value = row[col['skillValue']]
         no = row[col['no']]
         characters.append({
@@ -148,10 +171,10 @@ def read_characters(ws):
 
 def read_materials(ws_materials, ws_recipes):
     recipes = {}
-    for row in list(ws_recipes.iter_rows(values_only=True))[1:]:
+    for row_number, row in enumerate(list(ws_recipes.iter_rows(values_only=True))[1:], start=2):
         name = text(row[0])
         if name:
-            recipes[name] = {src: to_number(n) for src, n in parse_pairs(row[1])}
+            recipes[name] = parse_materials(row[1], f'合成レシピ {row_number}行目 {name}')
 
     materials = []
     for row in list(ws_materials.iter_rows(values_only=True))[1:]:
@@ -159,8 +182,10 @@ def read_materials(ws_materials, ws_recipes):
         if not name:
             continue
         material = {'name': name, 'category': text(row[0]), 'source': text(row[2])}
-        if name in recipes:
+        if recipes.get(name):
             material['recipe'] = recipes[name]
+        elif material['source'] == '合成':
+            notes.append(f'「{name}」は入手方法が「合成」ですが、合成レシピがまだありません')
         materials.append(material)
     return materials
 
@@ -215,6 +240,10 @@ def main():
         encoding='utf-8')
 
     print(f'キャラ {len(characters)} 件、素材 {len(materials)} 件、ステージ {len(stages)} 件を書き出しました')
+    if notes:
+        print(f'\nメモ（まだ埋まっていないところ）:')
+        for n in notes:
+            print('  - ' + n)
     if warnings:
         print(f'\n確認してほしいところが {len(warnings)} 件あります（この値は読み飛ばしました）:')
         for w in warnings:

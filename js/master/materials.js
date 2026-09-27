@@ -28,4 +28,10 @@ const MATERIALS = [
     {"name": "水", "category": "贈物", "source": "ドロップ"},
     {"name": "大豆", "category": "贈物", "source": "ドロップ"},
     {"name": "紙", "category": "贈物", "source": "合成", "recipe": {"木の枝": 1, "丸太": 1, "水": 1}},
+    {"name": "黄の絵具", "category": "贈物", "source": "イベント"},
+    {"name": "書き物道具", "category": "贈物", "source": "合成"},
+    {"name": "花札", "category": "贈物", "source": "合成"},
+    {"name": "天ぷら", "category": "贈物", "source": "合成"},
+    {"name": "そろばん", "category": "贈物", "source": "合成"},
+    {"name": "打刀の心得", "category": "贈物", "source": "合成"},
 ];
