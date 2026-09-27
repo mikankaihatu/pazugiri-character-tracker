@@ -1,9 +1,17 @@
 // ===== ドロップ統計タブ =====
 // 周回ごとのドロップを記録し、ステージ別に集計する
 
+let selectedDropChapter = '';
 let selectedDropStage = '';
 
 // ステージと落ちる品は data/master.xlsx の「ステージドロップ品」シート → js/master/stages.js
+
+// 章を選ぶと、その章の最初のステージを選び直す
+function selectDropChapter(chapter) {
+    selectedDropChapter = chapter;
+    selectedDropStage = stageNames().find(s => chapterOf(s) === chapter) || '';
+    renderDrops();
+}
 
 function selectDropStage(stage) {
     selectedDropStage = stage;
@@ -67,7 +75,10 @@ function formatDate(iso) {
 
 function renderDrops() {
     const stages = stageNames();
-    if (!stages.includes(selectedDropStage)) selectedDropStage = stages[0] || '';
+    const chapters = chapterNames();
+    if (!chapters.includes(selectedDropChapter)) selectedDropChapter = chapters[0] || '';
+    const chapterStages = stages.filter(s => chapterOf(s) === selectedDropChapter);
+    if (!chapterStages.includes(selectedDropStage)) selectedDropStage = chapterStages[0] || '';
 
     // 記録フォーム
     let html = `<div class="stage-row">
@@ -75,10 +86,14 @@ function renderDrops() {
     if (stages.length === 0) {
         html += '<div class="empty">data/master.xlsx の「ステージドロップ品」シートにステージを登録すると、ここで記録できます</div>';
     } else {
-        html += `<div class="stage-input-group">
-                <label style="font-size: 12px; color: #666;">ステージ</label>
+        html += `<div class="stage-input-group" style="flex-wrap: wrap;">
+                <label style="font-size: 12px; color: #666;">章</label>
+                <select onchange="selectDropChapter(this.value)">
+                    ${chapters.map(c => `<option value="${escapeHtml(c)}" ${c === selectedDropChapter ? 'selected' : ''}>${escapeHtml(chapterLabel(c))}</option>`).join('')}
+                </select>
+                <label style="font-size: 12px; color: #666; margin-left: 8px;">ステージ</label>
                 <select onchange="selectDropStage(this.value)">
-                    ${stages.map(s => `<option value="${escapeHtml(s)}" ${s === selectedDropStage ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('')}
+                    ${chapterStages.map(s => `<option value="${escapeHtml(s)}" ${s === selectedDropStage ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('')}
                 </select>
             </div>
             <div class="input-wrapper" style="gap: 12px; margin-bottom: 12px;">
@@ -94,12 +109,15 @@ function renderDrops() {
     }
     html += '</div>';
 
-    // ステージ別の集計
+    // ステージ別の集計（選んでいる章のステージだけ、Excel の順に並べる）
     const stats = stageStats();
-    const statStages = Object.keys(stats);
-    html += '<div class="section-title">ステージ別の集計</div>';
+    const order = s => (stages.indexOf(s) + 1) || stages.length + 1;
+    const statStages = Object.keys(stats)
+        .filter(s => chapterOf(s) === selectedDropChapter)
+        .sort((a, b) => order(a) - order(b));
+    html += `<div class="section-title">${escapeHtml(chapterLabel(selectedDropChapter || 'ステージ'))}の集計</div>`;
     if (statStages.length === 0) {
-        html += '<div class="empty" style="margin-bottom: 20px;">まだ記録がありません</div>';
+        html += '<div class="empty" style="margin-bottom: 20px;">この章の記録はまだありません</div>';
     } else {
         html += '<div class="grid">';
         statStages.forEach(stage => {

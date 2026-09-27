@@ -43,6 +43,20 @@ function stageNames() {
     return STAGES.map(s => s.name);
 }
 
+// 章はステージ名の「-」より前（「1-4」→「1」）。「-」がなければ「その他」
+function chapterOf(stage) {
+    return stage.includes('-') ? stage.split('-')[0] : 'その他';
+}
+
+function chapterLabel(chapter) {
+    return /^\d+$/.test(chapter) ? `第${chapter}章` : chapter;
+}
+
+// Excel に書いた順の章の一覧
+function chapterNames() {
+    return [...new Set(stageNames().map(chapterOf))];
+}
+
 // ステージで落ちる品の名前（素材以外の品も含む）
 function dropsFor(stage) {
     const master = STAGES.find(s => s.name === stage);
