@@ -1,11 +1,13 @@
 # pazugiri-character-tracker
 
-刀剣乱舞ぱずぎりの育成管理アプリです。HTML 1枚で動き、ビルドは不要です。
+刀剣乱舞ぱずぎりの育成管理アプリです。ビルドは不要です。
+
+**アプリの URL：** https://mikankaihatu.github.io/pazugiri-character-tracker/
 
 ## 使い方
 
-`index.html` をブラウザで開くだけで使えます。
-GitHub Pages を有効にすると、公開 URL からも使えます。
+上の URL をブラウザで開くと使えます。
+手元で試すときは、`index.html` をブラウザで直接開いてください。
 
 ## 機能
 
