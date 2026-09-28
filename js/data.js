@@ -7,7 +7,8 @@ const INITIAL_DATA = {
     characterLevelUps: {},   // { キャラ名: { 素材名: 必要数 } }
     levelUpTargets: {},      // { キャラ名: 上限突破後のレベル上限 }（上限突破の素材をセットしたとき）
     inventory: {},           // { 素材名: 所持数 }
-    runs: []                 // 周回記録
+    runs: [],                // 周回記録 [{ id, stage, date, drops, addedToInventory, party? }]
+    dropParty: []            // ドロップ統計で最後に選んだ出陣キャラ（キャラ名3つまで）
 };
 
 // ===== データ管理 =====
@@ -17,6 +18,7 @@ function validateData(savedData) {
     if (!savedData.levelUpTargets) savedData.levelUpTargets = {};
     if (!savedData.inventory) savedData.inventory = {};
     if (!Array.isArray(savedData.runs)) savedData.runs = [];
+    if (!Array.isArray(savedData.dropParty)) savedData.dropParty = [];
 
     // 旧形式（キャラを画面から追加していた頃）のデータを、キャラ名で保存する形に変換する
     if (savedData.characters) {
