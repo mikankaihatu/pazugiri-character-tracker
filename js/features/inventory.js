@@ -68,7 +68,7 @@ function renderInventory() {
         materials.forEach(m => {
             html += `<div class="material-item">
                 <div class="material-header" style="margin-bottom: 0;">
-                    <span class="material-name">${escapeHtml(m)}${effectOf(m) ? `<span class="hint-inline">${escapeHtml(effectOf(m))}</span>` : ''}</span>
+                    <span class="material-name">${escapeHtml(m)}${effectOf(m) ? `<span class="hint-inline">${escapeHtml(effectOf(m))}</span>` : ''} ${findStagesButton(m)}</span>
                     <span class="input-wrapper">
                         <button class="secondary small" onclick="changeInventory(${jsArg(m)}, -1)">−</button>
                         <input type="number" min="0" value="${getCount(m)}" onchange="setInventory(${jsArg(m)}, this.value)">

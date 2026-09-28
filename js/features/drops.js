@@ -79,6 +79,12 @@ function selectCompareYukari(yukari) {
     renderDrops();
 }
 
+// ドロップ数の＋−ボタン
+function stepDrop(index, delta) {
+    const input = document.getElementById(`run-drop-${index}`);
+    input.value = Math.max(0, toCount(input.value) + delta);
+}
+
 function recordRun() {
     const stage = selectedDropStage;
     if (!stage) return;
@@ -166,7 +172,9 @@ function renderDrops() {
             <div class="input-wrapper" style="gap: 12px; margin-bottom: 12px;">
                 ${dropsFor(selectedDropStage).map((m, i) => `
                     <span class="input-wrapper"><label>${escapeHtml(dropLabel(selectedDropStage, m))}</label>
-                    <input type="number" id="run-drop-${i}" min="0" value="0"></span>
+                    <button class="secondary step-btn" onclick="stepDrop(${i}, -1)">−</button>
+                    <input type="number" id="run-drop-${i}" min="0" value="0" style="width: 52px;">
+                    <button class="secondary step-btn" onclick="stepDrop(${i}, 1)">＋</button></span>
                 `).join('') || '<span class="empty">このステージに落ちる品が登録されていません</span>'}
             </div>
             <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
@@ -285,6 +293,14 @@ function pickSearchedStage(stage) {
     document.getElementById('drops').scrollIntoView({ behavior: 'smooth' });
 }
 
+// 他のタブの「🔍」から：ドロップ統計に切り替えて、その素材が落ちるステージを表示する
+function findStagesFor(material) {
+    searchItems = [material];
+    switchTab('drops');
+    const box = document.getElementById('stage-search');
+    if (box) box.scrollIntoView({ behavior: 'smooth' });
+}
+
 // ステージで落ちる品の一覧（素材は素材シートの順、そのあとに素材以外の品）
 function searchableItems() {
     const dropped = new Set(STAGES.flatMap(st => st.drops.map(d => d.name)));
@@ -301,7 +317,7 @@ function itemLabel(item) {
 
 function renderStageSearch() {
     const items = searchableItems().filter(i => !searchItems.includes(i));
-    let html = `<div class="stage-row">
+    let html = `<div class="stage-row" id="stage-search">
         <div class="stage-name">ステージ検索</div>
         <div class="hint" style="margin-bottom: 8px;">品を選ぶと、選んだ品がぜんぶ落ちるステージを表示します</div>
         <div class="stage-input-group" style="flex-wrap: wrap;">

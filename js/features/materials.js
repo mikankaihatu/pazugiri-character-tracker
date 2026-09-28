@@ -127,7 +127,7 @@ function renderMaterials() {
                     <td>${r.need}${r.crafting > 0 ? `<span class="hint-inline">（うち合成の材料${r.crafting}）</span>` : ''}</td>
                     <td>${getCount(m)}</td>
                     <td>${r.toCraft > 0 ? `あと${r.toCraft} ${renderCraftButton(m)}` : ''}</td>
-                    <td class="${r.short > 0 ? 'shortage' : r.toCraft > 0 ? 'to-craft' : 'enough'}">${r.short > 0 ? r.short : r.toCraft > 0 ? '合成' : 'OK'}</td>
+                    <td class="${r.short > 0 ? 'shortage' : r.toCraft > 0 ? 'to-craft' : 'enough'}">${r.short > 0 ? r.short : r.toCraft > 0 ? '合成' : 'OK'}${r.short > 0 ? ` ${findStagesButton(m)}` : ''}</td>
                 </tr>`).join('')}
             </table>
         </div>`;

@@ -143,6 +143,18 @@ function dropLabel(stage, item) {
     return drop && drop.kind ? `${item}（${drop.kind}）` : item;
 }
 
+// その品が落ちるステージがあるか
+function isDropped(item) {
+    return STAGES.some(st => st.drops.some(d => d.name === item));
+}
+
+// 「🔍」ボタン：ドロップ統計のステージ検索で、その素材が落ちるステージを表示する
+function findStagesButton(material) {
+    return isDropped(material)
+        ? `<button class="secondary small" title="落ちるステージを探す" onclick="findStagesFor(${jsArg(material)})">🔍</button>`
+        : '';
+}
+
 // ===== キャラ =====
 function allCharacters() {
     return CHARACTERS;
@@ -242,8 +254,9 @@ function expThreshold(level) {
 
 // 今の経験値と、次のレベル・レベル上限までにあと何経験値いるか（わからないものは null）
 // 経験値を入れていない（または今のレベルと合わない）ときは、今のレベルになったばかりとして数える
-function expStatus(name) {
-    const { level, levelCap, exp } = getProgress(name);
+// progress を渡すと、保存していない入力中の値で計算する
+function expStatus(name, progress = getProgress(name)) {
+    const { level, levelCap, exp } = progress;
     const start = expThreshold(level), next = expThreshold(level + 1);
     const fits = typeof exp === 'number' && (start === null || exp >= start) && (next === null || exp < next);
     const current = fits ? exp : start;

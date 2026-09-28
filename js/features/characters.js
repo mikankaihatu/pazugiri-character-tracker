@@ -24,6 +24,28 @@ let filters = {
     skillRange: ''
 };
 
+// 一覧の並び順（フィルターのリセットでは変えない）
+let charSort = '';
+const CHAR_SORTS = {
+    '': { label: '標準（Excel の順）' },
+    owned: { label: '所持を先に', compare: (a, b) => Number(b.p.owned) - Number(a.p.owned) },
+    level: { label: 'レベルが高い順', compare: (a, b) => Number(b.p.owned) - Number(a.p.owned) || b.p.level - a.p.level },
+    trust: { label: '信頼度が高い順', compare: (a, b) => Number(b.p.owned) - Number(a.p.owned) || b.p.trustLevel - a.p.trustLevel },
+    no: { label: '刀剣男士番号順', compare: (a, b) => (Number(a.c.no) || 9999) - (Number(b.c.no) || 9999) }
+};
+
+function sortCharacters(list) {
+    const sort = CHAR_SORTS[charSort];
+    if (!sort || !sort.compare) return list;
+    // 同じ順位のときは Excel の順のまま（安定ソート）
+    return list.map(c => ({ c, p: getProgress(c.name) })).sort(sort.compare).map(x => x.c);
+}
+
+function selectCharSort(value) {
+    charSort = value;
+    renderCharacters();
+}
+
 function matchesFilter(char) {
     const p = getProgress(char.name);
     if (filters.keyword && !(char.base || char.name).includes(filters.keyword)) return false;
@@ -93,17 +115,17 @@ function showCharEditDialog(name) {
             <label style="display: block; font-size: 12px; margin-bottom: 4px; color: #666;">レベル / レベル上限</label>
             <div style="display: flex; gap: 8px; align-items: center;">
                 <span style="font-size: 14px;">Lv</span>
-                <input type="number" id="edit-level" value="${p.level}" min="1" max="${p.levelCap}" style="width: 80px;">
+                <input type="number" id="edit-level" value="${p.level}" min="1" max="${p.levelCap}" style="width: 80px;" oninput="updateExpStatus(${jsArg(name)})">
                 <span style="font-size: 14px;">/</span>
-                <select id="edit-levelCap" style="flex: 1;" onchange="document.getElementById('edit-level').max = this.value">
+                <select id="edit-levelCap" style="flex: 1;" onchange="document.getElementById('edit-level').max = this.value; updateExpStatus(${jsArg(name)})">
                     ${levelCapOptions().map(n => `<option value="${n}" ${p.levelCap === n ? 'selected' : ''}>Lv${n}</option>`).join('')}
                 </select>
             </div>
         </div>
         <div style="margin-bottom: 12px;">
             <label style="display: block; font-size: 12px; margin-bottom: 4px; color: #666;">経験値（レベルアップ画面の「/」の左の数・なくても大丈夫です）</label>
-            <input type="number" id="edit-exp" value="${typeof p.exp === 'number' ? p.exp : ''}" min="0" placeholder="例：27958" style="width: 100%;">
-            ${renderExpStatus(name)}
+            <input type="number" id="edit-exp" value="${typeof p.exp === 'number' ? p.exp : ''}" min="0" placeholder="例：27958" style="width: 100%;" oninput="updateExpStatus(${jsArg(name)})">
+            <div id="edit-exp-status">${renderExpStatus(name)}</div>
         </div>
         <div style="margin-bottom: 16px;">
             <label style="display: block; font-size: 12px; margin-bottom: 4px; color: #666;">信頼度</label>
@@ -117,10 +139,27 @@ function showCharEditDialog(name) {
     document.body.appendChild(modal);
 }
 
-// 次のレベル・レベル上限まであと何経験値か（保存してある育成状況から計算）
-function renderExpStatus(name) {
-    const { levelCap } = getProgress(name);
-    const { entered, toNext, toCap } = expStatus(name);
+// 編集画面で入力中のレベル・レベル上限・経験値（保存前）
+function editingProgress(name) {
+    const levelCap = parseInt(document.getElementById('edit-levelCap').value) || 10;
+    const expText = document.getElementById('edit-exp').value;
+    return {
+        ...getProgress(name),
+        levelCap,
+        level: Math.min(levelCap, Math.max(1, parseInt(document.getElementById('edit-level').value) || 1)),
+        exp: expText === '' ? undefined : toCount(expText)
+    };
+}
+
+// 入力するたびに「あと○○経験値」を計算し直す
+function updateExpStatus(name) {
+    document.getElementById('edit-exp-status').innerHTML = renderExpStatus(name, editingProgress(name));
+}
+
+// 次のレベル・レベル上限まであと何経験値か
+function renderExpStatus(name, progress = getProgress(name)) {
+    const { levelCap } = progress;
+    const { entered, toNext, toCap } = expStatus(name, progress);
     const lines = [];
     if (toNext !== null) lines.push(`次のレベルまで あと <span class="stat-value">${toNext.toLocaleString()}</span>`);
     if (toCap !== null) lines.push(`Lv${levelCap}まで あと <span class="stat-value">${toCap.toLocaleString()}</span>`);
@@ -185,15 +224,14 @@ function renderCharInfo(char) {
 }
 
 function saveCharProgress(name) {
-    const levelCap = parseInt(document.getElementById('edit-levelCap').value) || 10;
+    // レベルは 1 〜 レベル上限の間、経験値は空なら記録しない（editingProgress で整える）
+    const { level, levelCap, exp } = editingProgress(name);
     setProgress(name, {
         owned: document.getElementById('edit-owned').checked,
         trustLevel: Math.min(MAX_TRUST_LEVEL, toCount(document.getElementById('edit-trustLevel').value)),
         levelCap,
-        // レベルは 1 〜 レベル上限の間にする
-        level: Math.min(levelCap, Math.max(1, parseInt(document.getElementById('edit-level').value) || 1)),
-        // 経験値は空なら記録しない
-        exp: document.getElementById('edit-exp').value === '' ? undefined : toCount(document.getElementById('edit-exp').value)
+        level,
+        exp
     });
     closeCharEditDialog();
     renderCharacters();
@@ -275,7 +313,13 @@ function renderCharFilters() {
                 <input type="number" id="filter-trustLevel" min="0" max="${MAX_TRUST_LEVEL}" placeholder="0-${MAX_TRUST_LEVEL}" value="${escapeHtml(filters.trustLevel)}" style="width: 100%; font-size: 12px;" onchange="applyFilters()">
             </div>
         </div>
-        <button class="secondary small" onclick="clearFilters()">リセット</button>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <button class="secondary small" onclick="clearFilters()">リセット</button>
+            <label class="filter-label" style="margin: 0 0 0 auto;">並び順</label>
+            <select style="font-size: 12px;" onchange="selectCharSort(this.value)">
+                ${Object.entries(CHAR_SORTS).map(([k, v]) => option(k, v.label, charSort)).join('')}
+            </select>
+        </div>
     </div>`;
 }
 
@@ -320,8 +364,8 @@ function renderCharacters() {
         return (ia < 0 ? RARITY_ORDER.length : ia) - (ib < 0 ? RARITY_ORDER.length : ib);
     });
     rarities.forEach((rarity, i) => {
-        // 並び順は Excel（js/master/characters.js）の行の順
-        const list = chars.filter(c => (c.rarity || 'その他') === rarity && matchesFilter(c));
+        // 並び順は Excel（js/master/characters.js）の行の順。「並び順」を選んでいれば並べ替える
+        const list = sortCharacters(chars.filter(c => (c.rarity || 'その他') === rarity && matchesFilter(c)));
         html += `<div class="rarity-section"><div class="rarity-title ${i > 0 ? 'unrevealed' : ''}">${escapeHtml(rarity)}</div>`;
         if (list.length === 0) {
             html += '<div class="empty">条件に合うキャラがありません</div>';
