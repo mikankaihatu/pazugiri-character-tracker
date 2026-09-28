@@ -7,6 +7,8 @@ let compareYukari = '';   // 集計を「このゆかりのキャラがいる周
 
 const PARTY_SIZE = 3;
 
+let searchItems = [];     // ステージ検索で選んだ品（ぜんぶ落ちるステージを探す）
+
 // ステージと落ちる品は data/master.xlsx の「ステージドロップ品」シート → js/master/stages.js
 
 // 章を選ぶと、その章の最初のステージを選び直す
@@ -174,6 +176,8 @@ function renderDrops() {
     }
     html += '</div>';
 
+    html += renderStageSearch();
+
     // ステージ別の集計（選んでいる章のステージだけ、Excel の順に並べる）
     const stats = stageStats();
     const order = s => (stages.indexOf(s) + 1) || stages.length + 1;
@@ -255,4 +259,84 @@ function renderYukariCompare(stage, materials, withStats, withoutStats) {
         ${materials.map(m => `<tr><td>${escapeHtml(dropLabel(stage, m))}</td>${cell(withStats, m)}${cell(withoutStats, m)}</tr>`).join('')}
     </table>
     <div class="hint" style="margin: 4px 0 0;">上：1周平均　下：ドロップ率</div>`;
+}
+
+// ===== ステージ検索（選んだ品がぜんぶ落ちるステージ） =====
+function addSearchItem(item) {
+    if (item && !searchItems.includes(item)) searchItems.push(item);
+    renderDrops();
+}
+
+function removeSearchItem(item) {
+    searchItems = searchItems.filter(i => i !== item);
+    renderDrops();
+}
+
+function clearSearchItems() {
+    searchItems = [];
+    renderDrops();
+}
+
+// 検索結果からステージを選ぶと、記録フォームをそのステージにする
+function pickSearchedStage(stage) {
+    selectedDropChapter = chapterOf(stage);
+    selectedDropStage = stage;
+    renderDrops();
+    document.getElementById('drops').scrollIntoView({ behavior: 'smooth' });
+}
+
+// ステージで落ちる品の一覧（素材は素材シートの順、そのあとに素材以外の品）
+function searchableItems() {
+    const dropped = new Set(STAGES.flatMap(st => st.drops.map(d => d.name)));
+    const materials = allMaterials().filter(m => dropped.has(m));
+    const others = [...dropped].filter(m => !materials.includes(m));
+    return [...materials, ...others];
+}
+
+// 素材以外の品は「塩おにぎり（絵馬）」のように種類をつける
+function itemLabel(item) {
+    const drop = STAGES.flatMap(st => st.drops).find(d => d.name === item && d.kind);
+    return drop ? `${item}（${drop.kind}）` : item;
+}
+
+function renderStageSearch() {
+    const items = searchableItems().filter(i => !searchItems.includes(i));
+    let html = `<div class="stage-row">
+        <div class="stage-name">ステージ検索</div>
+        <div class="hint" style="margin-bottom: 8px;">品を選ぶと、選んだ品がぜんぶ落ちるステージを表示します</div>
+        <div class="stage-input-group" style="flex-wrap: wrap;">
+            <select onchange="addSearchItem(this.value)">
+                <option value="">品を追加…</option>
+                ${items.map(i => `<option value="${escapeHtml(i)}">${escapeHtml(itemLabel(i))}</option>`).join('')}
+            </select>
+            ${searchItems.length > 0 ? '<button class="secondary small" onclick="clearSearchItems()">クリア</button>' : ''}
+        </div>`;
+    if (searchItems.length > 0) {
+        html += `<div class="chip-list" style="margin-top: 8px;">${searchItems.map(i => `<span class="chip">${escapeHtml(itemLabel(i))}<button class="chip-delete" onclick="removeSearchItem(${jsArg(i)})">×</button></span>`).join('')}</div>`;
+        const stats = stageStats();
+        const found = STAGES.filter(st => searchItems.every(i => st.drops.some(d => d.name === i)));
+        if (found.length === 0) {
+            html += '<div class="empty">選んだ品がぜんぶ落ちるステージはありません（品を減らしてみてください）</div>';
+        } else {
+            html += `<div class="hint" style="margin-bottom: 6px;">${found.length}か所</div>`;
+            html += found.map(st => {
+                const s = stats[st.name];
+                const drops = st.drops.map(d => {
+                    const hit = searchItems.includes(d.name);
+                    const avg = hit && s ? `（1周 ${((s.totals[d.name] || 0) / s.runs).toFixed(2)}）` : '';
+                    const label = escapeHtml(dropLabel(st.name, d.name)) + avg;
+                    return hit ? `<b style="color: #2e7d32;">${label}</b>` : `<span style="color: #999;">${label}</span>`;
+                }).join('、');
+                return `<div class="material-item material-header" style="margin-bottom: 6px; align-items: flex-start;">
+                    <div style="font-size: 13px; flex: 1;">
+                        <div><span class="material-name" style="margin-right: 8px;">${escapeHtml(st.name)}</span>
+                            <span style="color: #999; font-size: 12px;">${escapeHtml(chapterLabel(chapterOf(st.name)))}${(st.advantage || []).length ? `・有利 ${escapeHtml(st.advantage.join('・'))}` : ''}${s ? `・記録${s.runs}周` : ''}</span></div>
+                        <div style="margin-top: 2px;">${drops}</div>
+                    </div>
+                    <button class="secondary small" onclick="pickSearchedStage(${jsArg(st.name)})">記録する</button>
+                </div>`;
+            }).join('');
+        }
+    }
+    return html + '</div>';
 }
