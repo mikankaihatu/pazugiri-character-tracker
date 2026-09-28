@@ -72,3 +72,4 @@ button:disabled { background: #bbb; cursor: not-allowed; }
 .site-footer p { margin-bottom: 4px; }
 .site-footer a { color: #666; }
 .skill-tag { font-size: 11px; background: #eeeeee; color: #555; padding: 1px 6px; border-radius: 10px; }
+.step-btn { min-width: 36px; height: 36px; padding: 0; font-size: 18px; }
