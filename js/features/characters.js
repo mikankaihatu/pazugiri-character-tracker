@@ -132,15 +132,11 @@ function showCharEditDialog(name) {
             <input type="number" id="edit-trustLevel" value="${p.trustLevel}" min="0" max="${MAX_TRUST_LEVEL}" style="width: 100%;">
         </div>
         <div style="margin-bottom: 16px;">
-            <label style="display: block; font-size: 12px; margin-bottom: 4px; color: #666;">限界突破段階（＝奥義Lv） / 強化片の所持数</label>
-            <div style="display: flex; gap: 8px; align-items: center;">
-                <select id="edit-skillStage" style="flex: 1;" onchange="updateSkillUpgradeStatus(${jsArg(name)})">
-                    ${[...Array(MAX_SKILL_STAGE)].map((_, i) => `<option value="${i + 1}" ${p.skillStage === i + 1 ? 'selected' : ''}>${i + 1} / ${MAX_SKILL_STAGE}</option>`).join('')}
-                </select>
-                <span style="font-size: 12px; color: #666;">強化片</span>
-                <input type="number" id="edit-shards" value="${p.shards}" min="0" style="width: 80px;" oninput="updateSkillUpgradeStatus(${jsArg(name)})">
-            </div>
-            <div id="edit-skill-status">${renderSkillUpgradeStatus(name, p.skillStage, p.shards)}</div>
+            <label style="display: block; font-size: 12px; margin-bottom: 4px; color: #666;">限界突破段階（＝奥義Lv）</label>
+            <select id="edit-skillStage" style="width: 100%;" onchange="updateSkillUpgradeStatus(${jsArg(name)})">
+                ${[...Array(MAX_SKILL_STAGE)].map((_, i) => `<option value="${i + 1}" ${p.skillStage === i + 1 ? 'selected' : ''}>${i + 1} / ${MAX_SKILL_STAGE}</option>`).join('')}
+            </select>
+            <div id="edit-skill-status">${renderSkillUpgradeStatus(name, p.skillStage)}</div>
         </div>
         <div style="display: flex; gap: 8px; justify-content: flex-end;">
             <button class="secondary" onclick="closeCharEditDialog()">キャンセル</button>
@@ -168,15 +164,13 @@ function updateExpStatus(name) {
 }
 
 // 次の限界突破に必要な強化片・小判と、最大段階までの合計
-function renderSkillUpgradeStatus(name, stage, shards) {
+function renderSkillUpgradeStatus(name, stage) {
     if (stage >= MAX_SKILL_STAGE) return '<div class="hint" style="margin: 6px 0 0;">限界突破は最大です</div>';
     const next = skillUpgradeOf(name, stage);
     const lines = [];
     if (next) {
         const parts = [];
-        if (next.shards !== undefined) {
-            parts.push(`強化片 <span class="stat-value">${next.shards}</span> <span class="${shards >= next.shards ? 'enough' : 'shortage'}">（所持${shards}${shards >= next.shards ? '' : `・あと${next.shards - shards}`}）</span>`);
-        }
+        if (next.shards !== undefined) parts.push(`強化片 <span class="stat-value">${next.shards}</span>`);
         if (next.coins !== undefined) parts.push(`小判 <span class="stat-value">${next.coins.toLocaleString()}</span>`);
         lines.push(`${stage}→${stage + 1}：${parts.join('・')}`);
     } else {
@@ -191,8 +185,7 @@ function renderSkillUpgradeStatus(name, stage, shards) {
 
 function updateSkillUpgradeStatus(name) {
     const stage = parseInt(document.getElementById('edit-skillStage').value) || 1;
-    const shards = toCount(document.getElementById('edit-shards').value);
-    document.getElementById('edit-skill-status').innerHTML = renderSkillUpgradeStatus(name, stage, shards);
+    document.getElementById('edit-skill-status').innerHTML = renderSkillUpgradeStatus(name, stage);
 }
 
 // 次のレベル・レベル上限まであと何経験値か
@@ -269,7 +262,6 @@ function saveCharProgress(name) {
         owned: document.getElementById('edit-owned').checked,
         trustLevel: Math.min(MAX_TRUST_LEVEL, toCount(document.getElementById('edit-trustLevel').value)),
         skillStage: Math.min(MAX_SKILL_STAGE, Math.max(1, parseInt(document.getElementById('edit-skillStage').value) || 1)),
-        shards: toCount(document.getElementById('edit-shards').value),
         levelCap,
         level,
         exp

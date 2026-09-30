@@ -225,9 +225,9 @@ function yukariOf(char) {
 
 const MAX_TRUST_LEVEL = 10;
 
-// skillStage は限界突破段階（＝奥義Lv、1〜6）、shards はそのキャラの強化片の所持数
+// skillStage は限界突破段階（＝奥義Lv、1〜6）
 function getProgress(name) {
-    return { owned: false, level: 1, trustLevel: 0, levelCap: 10, skillStage: 1, shards: 0, ...data.characterProgress[name] };
+    return { owned: false, level: 1, trustLevel: 0, levelCap: 10, skillStage: 1, ...data.characterProgress[name] };
 }
 
 // ===== 限界突破（奥義強化） =====
