@@ -225,12 +225,12 @@ function yukariOf(char) {
 
 const MAX_TRUST_LEVEL = 10;
 
-// skillStage は限界突破段階（＝奥義Lv、1〜6）
+// skillStage は奥義レベル（1〜6。ゲームでは強化片で「限界突破」すると上がる）
 function getProgress(name) {
     return { owned: false, level: 1, trustLevel: 0, levelCap: 10, skillStage: 1, ...data.characterProgress[name] };
 }
 
-// ===== 限界突破（奥義強化） =====
+// ===== 奥義レベル（奥義強化） =====
 const MAX_SKILL_STAGE = 6;
 
 // stage → stage+1 に必要な { shards, coins }（わからなければ null）
@@ -240,7 +240,7 @@ function skillUpgradeOf(name, stage) {
     return table[stage] || null;
 }
 
-// 今の段階から最大段階までに必要な強化片・小判の合計（unknown はわからない段階の数）
+// 今の奥義レベルから最大までに必要な強化片・小判の合計（unknown はわからないレベルの数）
 function skillUpgradeTotal(name, stage) {
     const total = { shards: 0, coins: 0, unknown: 0 };
     for (let s = stage; s < MAX_SKILL_STAGE; s++) {

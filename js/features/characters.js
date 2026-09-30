@@ -132,9 +132,9 @@ function showCharEditDialog(name) {
             <input type="number" id="edit-trustLevel" value="${p.trustLevel}" min="0" max="${MAX_TRUST_LEVEL}" style="width: 100%;">
         </div>
         <div style="margin-bottom: 16px;">
-            <label style="display: block; font-size: 12px; margin-bottom: 4px; color: #666;">限界突破段階（＝奥義Lv）</label>
+            <label style="display: block; font-size: 12px; margin-bottom: 4px; color: #666;">奥義レベル</label>
             <select id="edit-skillStage" style="width: 100%;" onchange="updateSkillUpgradeStatus(${jsArg(name)})">
-                ${[...Array(MAX_SKILL_STAGE)].map((_, i) => `<option value="${i + 1}" ${p.skillStage === i + 1 ? 'selected' : ''}>${i + 1} / ${MAX_SKILL_STAGE}</option>`).join('')}
+                ${[...Array(MAX_SKILL_STAGE)].map((_, i) => `<option value="${i + 1}" ${p.skillStage === i + 1 ? 'selected' : ''}>Lv${i + 1}</option>`).join('')}
             </select>
             <div id="edit-skill-status">${renderSkillUpgradeStatus(name, p.skillStage)}</div>
         </div>
@@ -163,22 +163,22 @@ function updateExpStatus(name) {
     document.getElementById('edit-exp-status').innerHTML = renderExpStatus(name, editingProgress(name));
 }
 
-// 次の限界突破に必要な強化片・小判と、最大段階までの合計
+// 次の奥義レベルに必要な強化片・小判と、最大レベルまでの合計
 function renderSkillUpgradeStatus(name, stage) {
-    if (stage >= MAX_SKILL_STAGE) return '<div class="hint" style="margin: 6px 0 0;">限界突破は最大です</div>';
+    if (stage >= MAX_SKILL_STAGE) return '<div class="hint" style="margin: 6px 0 0;">奥義レベルは最大です</div>';
     const next = skillUpgradeOf(name, stage);
     const lines = [];
     if (next) {
         const parts = [];
         if (next.shards !== undefined) parts.push(`強化片 <span class="stat-value">${next.shards}</span>`);
         if (next.coins !== undefined) parts.push(`小判 <span class="stat-value">${next.coins.toLocaleString()}</span>`);
-        lines.push(`${stage}→${stage + 1}：${parts.join('・')}`);
+        lines.push(`Lv${stage}→${stage + 1}：${parts.join('・')}`);
     } else {
-        lines.push(`${stage}→${stage + 1}：必要な強化片・小判はまだわかりません`);
+        lines.push(`Lv${stage}→${stage + 1}：必要な強化片・小判はまだわかりません`);
     }
     const total = skillUpgradeTotal(name, stage);
     if (stage + 1 < MAX_SKILL_STAGE && total.unknown < MAX_SKILL_STAGE - stage) {
-        lines.push(`${MAX_SKILL_STAGE}まで：強化片 ${total.shards}・小判 ${total.coins.toLocaleString()}${total.unknown > 0 ? `（わからない段階が${total.unknown}つあります）` : ''}`);
+        lines.push(`Lv${MAX_SKILL_STAGE}まで：強化片 ${total.shards}・小判 ${total.coins.toLocaleString()}${total.unknown > 0 ? `（わからないレベルが${total.unknown}つあります）` : ''}`);
     }
     return `<div class="hint" style="margin: 6px 0 0;">${lines.join('<br>')}</div>`;
 }
@@ -371,7 +371,7 @@ function renderCharCard(char) {
                     ${color ? badge(color.bg, color.icon) : ''}
                     ${p.owned ? badge(p.level >= p.levelCap ? '#c8e6c9' : '#e0f2f1', `📈 Lv${p.level}/${p.levelCap}`) : ''}
                     ${p.trustLevel > 0 ? badge('#f0f4c3', `💖 ${p.trustLevel}`) : ''}
-                    ${p.owned ? badge('#fce4ec', `✨ 限界突破${p.skillStage}/${MAX_SKILL_STAGE}`) : ''}
+                    ${p.owned ? badge('#fce4ec', `✨ 奥義Lv${p.skillStage}`) : ''}
                 </div>
             </div>
             <label style="font-size: 12px; white-space: nowrap;"><input type="checkbox" ${p.owned ? 'checked' : ''} onchange="toggleOwned(${jsArg(char.name)}, this.checked)"> 所持</label>
