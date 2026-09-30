@@ -261,6 +261,32 @@ def read_stages(ws):
     return stages
 
 
+def read_skill_upgrades(ws):
+    """「奥義強化」シート：限界突破段階ごとに必要な強化片と小判（通常 / レア）
+        見出し：限界突破段階 / 通常:強化片 / 通常:小判 / レア:強化片 / レア:小判
+        段階は「2→3」のように書く。わかっているところだけ埋めればよい
+    """
+    rows = list(ws.iter_rows(values_only=True))
+    headers = [text(h) for h in rows[0]]
+    cols = {}
+    for i, h in enumerate(headers):
+        m = re.match(r'^(通常|レア)\s*[:：]\s*(強化片|小判)', h)
+        if m:
+            cols[(m.group(1), m.group(2))] = i
+    upgrades = {'通常': {}, 'レア': {}}
+    for row_number, row in enumerate(rows[1:], start=2):
+        m = re.match(r'^\s*(\d+)\s*(?:→|->|～|~)\s*(\d+)', text(row[0]) if row else '')
+        if not m:
+            continue
+        stage_from = m.group(1)
+        for (rarity, kind), i in cols.items():
+            value = parse_exp(row[i], f'奥義強化 {row_number}行目 {rarity}:{kind}')
+            if value is not None:
+                key = 'shards' if kind == '強化片' else 'coins'
+                upgrades[rarity].setdefault(stage_from, {})[key] = value
+    return upgrades
+
+
 def js_line(obj):
     return '    ' + json.dumps(obj, ensure_ascii=False) + ','
 
@@ -275,6 +301,7 @@ def main():
     materials = read_materials(wb['素材'], wb['合成レシピ'])
     categories = list(dict.fromkeys(m['category'] for m in materials))
     stages = read_stages(wb['ステージドロップ品']) if 'ステージドロップ品' in wb.sheetnames else []
+    skill_upgrades = read_skill_upgrades(wb['奥義強化']) if '奥義強化' in wb.sheetnames else {'通常': {}, 'レア': {}}
 
     # 同じ名前が2回以上ある（素材・キャラ・ステージ）
     for label, names in [('素材', [m['name'] for m in materials]),
@@ -307,7 +334,10 @@ def main():
         + 'const CHARACTERS = [\n' + '\n'.join(js_line(c) for c in characters) + '\n];\n\n'
         + '// 経験値表（全キャラ共通・レアも同じ）\n'
         + '// { レベル: そのレベルから次のレベルに上がるのに必要な累計経験値（ゲーム画面の「/」の右の数） }\n'
-        + 'const EXP_TABLE = ' + json.dumps({str(k): exp_table[k] for k in sorted(exp_table)}) + ';\n',
+        + 'const EXP_TABLE = ' + json.dumps({str(k): exp_table[k] for k in sorted(exp_table)}) + ';\n\n'
+        + '// 限界突破（奥義強化）に必要な強化片と小判\n'
+        + '// { 通常 / レア: { 今の段階: { shards: 強化片, coins: 小判 } } }（わかっている段階だけ）\n'
+        + 'const SKILL_UPGRADES = ' + json.dumps(skill_upgrades, ensure_ascii=False) + ';\n',
         encoding='utf-8')
     (OUT_DIR / 'materials.js').write_text(
         '// ===== 素材の固定データ =====\n' + HEADER

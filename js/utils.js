@@ -225,8 +225,31 @@ function yukariOf(char) {
 
 const MAX_TRUST_LEVEL = 10;
 
+// skillStage は限界突破段階（＝奥義Lv、1〜6）、shards はそのキャラの強化片の所持数
 function getProgress(name) {
-    return { owned: false, level: 1, trustLevel: 0, levelCap: 10, ...data.characterProgress[name] };
+    return { owned: false, level: 1, trustLevel: 0, levelCap: 10, skillStage: 1, shards: 0, ...data.characterProgress[name] };
+}
+
+// ===== 限界突破（奥義強化） =====
+const MAX_SKILL_STAGE = 6;
+
+// stage → stage+1 に必要な { shards, coins }（わからなければ null）
+function skillUpgradeOf(name, stage) {
+    const char = CHARACTERS.find(c => c.name === name);
+    const table = (typeof SKILL_UPGRADES !== 'undefined' && char) ? SKILL_UPGRADES[char.rarity] || {} : {};
+    return table[stage] || null;
+}
+
+// 今の段階から最大段階までに必要な強化片・小判の合計（unknown はわからない段階の数）
+function skillUpgradeTotal(name, stage) {
+    const total = { shards: 0, coins: 0, unknown: 0 };
+    for (let s = stage; s < MAX_SKILL_STAGE; s++) {
+        const up = skillUpgradeOf(name, s);
+        if (!up || up.shards === undefined || up.coins === undefined) { total.unknown++; continue; }
+        total.shards += up.shards;
+        total.coins += up.coins;
+    }
+    return total;
 }
 
 // ===== レベル上限（上限突破） =====
