@@ -262,9 +262,9 @@ def read_stages(ws):
 
 
 def read_skill_upgrades(ws):
-    """「奥義強化」シート：限界突破段階ごとに必要な強化片と小判（通常 / レア）
-        見出し：限界突破段階 / 通常:強化片 / 通常:小判 / レア:強化片 / レア:小判
-        段階は「2→3」のように書く。わかっているところだけ埋めればよい
+    """「奥義強化」シート：奥義レベルごとに必要な強化片と小判（通常 / レア）
+        見出し：奥義レベル / 通常:強化片 / 通常:小判 / レア:強化片 / レア:小判
+        奥義レベルは「2→3」のように書く。わかっているところだけ埋めればよい
     """
     rows = list(ws.iter_rows(values_only=True))
     headers = [text(h) for h in rows[0]]
@@ -335,8 +335,8 @@ def main():
         + '// 経験値表（全キャラ共通・レアも同じ）\n'
         + '// { レベル: そのレベルから次のレベルに上がるのに必要な累計経験値（ゲーム画面の「/」の右の数） }\n'
         + 'const EXP_TABLE = ' + json.dumps({str(k): exp_table[k] for k in sorted(exp_table)}) + ';\n\n'
-        + '// 限界突破（奥義強化）に必要な強化片と小判\n'
-        + '// { 通常 / レア: { 今の段階: { shards: 強化片, coins: 小判 } } }（わかっている段階だけ）\n'
+        + '// 奥義レベルを上げる（奥義強化）のに必要な強化片と小判\n'
+        + '// { 通常 / レア: { 今の奥義レベル: { shards: 強化片, coins: 小判 } } }（わかっているレベルだけ）\n'
         + 'const SKILL_UPGRADES = ' + json.dumps(skill_upgrades, ensure_ascii=False) + ';\n',
         encoding='utf-8')
     (OUT_DIR / 'materials.js').write_text(
