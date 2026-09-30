@@ -53,7 +53,7 @@ function renderNeedLine(p) {
 function renderInventory() {
     const plan = requirementPlan(trackedNeeds());
     const neededCount = Object.keys(plan).length;
-    let html = `<div class="hint" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+    let html = renderScanBox() + `<div class="hint" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
         <span>📋 は素材トラッキングに登録したキャラの育成に必要な数です（合成の材料も含みます）</span>
         <label style="font-size: 13px; color: #333;"><input type="checkbox" ${showOnlyNeeded ? 'checked' : ''} onchange="toggleShowOnlyNeeded(this.checked)"> 育成に必要な素材だけ表示（${neededCount}）</label>
     </div>`;
