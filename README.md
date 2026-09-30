@@ -39,6 +39,11 @@
 - **在庫管理**：素材の所持数を増減します。合成レシピがある素材は、ボタンで合成できます。
   - 素材トラッキングに登録したキャラの育成に必要な数（📋）と、不足数を素材ごとに表示します。
   - 「育成に必要な素材だけ表示」で、必要な素材だけに絞り込めます。
+- **スクショから在庫を読み取る**（在庫管理タブ）：ゲームの「アイテム一覧 → 贈物」のスクショを選ぶと、素材の名前と所持数を読み取ります。確認してから「在庫に反映」で在庫に入れます。
+  - 画像は端末の中だけで処理し、どこにも送りません。
+  - 名前は文字認識（[tesseract.js](https://github.com/naptha/tesseract.js)）で読み、数字はゲームの数字の形と比べて読みます。
+  - 名前が画面の下で切れているマスや、読めなかったマスは、素材を選んで反映できます。
+  - 公開ページ（https）で動きます。`index.html` を直接開いたとき（file://）は文字認識が動きません。
 - **情報の提供**：画面右上の「📝 情報を提供」から [情報提供フォーム](https://docs.google.com/forms/d/e/1FAIpQLSd20NaHxD78ToytsjdwiVBgYvdicYdNh_uqdTjLhYnRM8zObQ/viewform) を開けます。キャラの「編集」画面には、まだ情報がない項目とフォームへのリンクが出ます。
 - **不具合の報告**：画面右上の「🐞 不具合を報告」から [報告フォーム](https://forms.gle/P9XydgGZhJAK1Bfn6) を開けます。設定タブの「使用環境をコピー」で、ブラウザなどの情報をフォームに貼れます。
 - 在庫管理と素材トラッキングの不足まとめにある「🔍」を押すと、その素材が落ちるステージをステージ検索で表示します。
@@ -117,7 +122,9 @@ js/features/
   materials.js          素材トラッキングタブ
   inventory.js          在庫管理タブ
   settings.js           設定タブ（バックアップ）
+  scan.js               スクショから在庫を読み取る
 js/app.js               タブ切り替えと初期化
+vendor/tesseract/       文字認識（tesseract.js・日本語の学習データ）。スクショ読み取りで使う
 ```
 
 - ビルドは不要です。ファイルを編集して push すれば GitHub Pages に反映されます。
@@ -132,3 +139,8 @@ js/app.js               タブ切り替えと初期化
 
 データはブラウザの `localStorage`（キー名 `toukenData`）に保存されます。
 ブラウザや端末が変わるとデータは引き継がれません。
+
+## 使っているライブラリ
+
+- [tesseract.js](https://github.com/naptha/tesseract.js) / tesseract.js-core（Apache License 2.0）：`vendor/tesseract/`
+- 日本語の学習データ [tessdata_best](https://github.com/tesseract-ocr/tessdata_best) の jpn（Apache License 2.0）：`vendor/tesseract/lang/`
