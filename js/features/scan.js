@@ -331,6 +331,8 @@ function renderScanBox() {
         <input type="file" accept="image/*" multiple ${scanBusy ? 'disabled' : ''} onchange="scanScreenshots(this.files)">
         ${scanMessage ? `<div class="hint" style="margin: 8px 0 0;">${escapeHtml(scanMessage)}</div>` : ''}`;
     if (scanResults.length > 0) {
+        // 名前を選ぶ欄には、読み取れた素材とほかの欄で選んだ素材を出さない
+        const usedMaterials = new Set(scanResults.map(r => r.material).filter(Boolean));
         html += `<div class="hint" style="margin: 8px 0 4px;">数を確かめてから「在庫に反映」を押してください。<span style="background: #fff3cd;">黄色</span>の行は読み取りに自信がないところです。</div>
             <table class="stat-table">
                 <tr><th></th><th>素材</th><th>読み取った数</th><th>今の在庫</th></tr>
@@ -338,7 +340,7 @@ function renderScanBox() {
                     <td><input type="checkbox" ${r.apply ? 'checked' : ''} onchange="setScanApply(${i}, this.checked)"></td>
                     <td>${!r.pick ? escapeHtml(r.material) : `<select onchange="setScanMaterial(${i}, this.value)" style="max-width: 120px;">
                         <option value="">名前が読めません</option>
-                        ${allMaterials().map(m => `<option value="${escapeHtml(m)}" ${m === r.material ? 'selected' : ''}>${escapeHtml(m)}</option>`).join('')}
+                        ${allMaterials().filter(m => m === r.material || !usedMaterials.has(m)).map(m => `<option value="${escapeHtml(m)}" ${m === r.material ? 'selected' : ''}>${escapeHtml(m)}</option>`).join('')}
                     </select>`}</td>
                     <td><input type="number" min="0" value="${r.count}" style="width: 64px;" onchange="setScanCount(${i}, this.value)"></td>
                     <td>${r.current}</td>
