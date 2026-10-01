@@ -148,7 +148,8 @@ def read_characters(ws):
     skill_name_col = headers.index('奥義名') if '奥義名' in headers else None
     # 「奥義lv1説明文」…「奥義lv5説明文」と「1lv[体力,攻撃]」…「30lv[体力,攻撃]」の列（増えても読めるようにする）
     skill_cols = {int(m.group(1)): i for i, h in enumerate(headers) if (m := re.match(r'^奥義lv(\d+)', h))}
-    level_cols = {int(m.group(1)): i for i, h in enumerate(headers) if (m := re.match(r'^(\d+)lv', h))}
+    # 見出しは「2lv[体力,攻撃]」でも、数字だけの「2」でもよい
+    level_cols = {int(m.group(1)): i for i, h in enumerate(headers) if (m := re.match(r'^(\d+)\s*(?:lv|$)', h, re.IGNORECASE))}
     # 「上限突破10→20」などの列（→ / -> / ～ のどれでもよい）
     limit_cols = [(int(m.group(1)), int(m.group(2)), i) for i, h in enumerate(headers)
                   if (m := re.match(r'^上限突破\s*(\d+)\s*(?:→|->|～|~)\s*(\d+)', h))]
@@ -177,6 +178,11 @@ def read_characters(ws):
                 if len(stat) == 3:
                     add_exp(lv, int(stat.pop()), f'{row_number}行目 {base}')
                 levels[str(lv)] = stat
+        # 体力・攻撃はレベルが上がるほど大きくなるはず。逆になっていたら書き間違いの可能性がある
+        known = sorted((int(lv), stat) for lv, stat in levels.items())
+        for (lv1, s1), (lv2, s2) in zip(known, known[1:]):
+            if s2[0] <= s1[0] or s2[1] <= s1[1]:
+                warnings.append(f'{row_number}行目 {base}: {lv1}lv「{s1[0]},{s1[1]}」より {lv2}lv「{s2[0]},{s2[1]}」が大きくなっていません（書き間違いかもしれません）')
         skills = {str(lv): text(row[i]) for lv, i in skill_cols.items() if text(row[i])}
         # [{ from: 10, to: 20, materials: { 素材名: 個数 } }]（書いてある段階だけ）
         limit_breaks = []
