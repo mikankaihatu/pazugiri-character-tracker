@@ -11,7 +11,7 @@ const MATERIALS = [
     {"name": "火打ち石", "category": "贈物", "source": "ドロップ"},
     {"name": "桃", "category": "贈物", "source": "ドロップ"},
     {"name": "木の枝", "category": "贈物", "source": "ドロップ"},
-    {"name": "卵", "category": "贈物", "source": "ドロップ", "effect": "黒"},
+    {"name": "卵", "category": "贈物", "source": "ドロップ", "effect": "レアドロップ"},
     {"name": "お魚", "category": "贈物", "source": "ドロップ"},
     {"name": "サンゴ", "category": "贈物", "source": "ドロップ"},
     {"name": "丸太", "category": "贈物", "source": "ドロップ"},
