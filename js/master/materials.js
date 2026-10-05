@@ -2,7 +2,7 @@
 // このファイルは tools/convert_master.py で data/master.xlsx から作っています。
 // 直接書き換えても動きますが、次に変換したときに Excel の内容で上書きされます。
 
-const MATERIAL_CATEGORIES = ["贈物", "経験値の書"];
+const MATERIAL_CATEGORIES = ["贈物", "経験値の書", "アイテム", "絵馬経験値の勾玉"];
 
 const MATERIALS = [
     {"name": "お花", "category": "贈物", "source": "ドロップ"},
@@ -58,4 +58,8 @@ const MATERIALS = [
     {"name": "経験値の書・小", "category": "経験値の書", "source": "", "effect": "経験値+150", "exp": 150},
     {"name": "経験値の書・中", "category": "経験値の書", "source": "", "effect": "経験値+1200", "exp": 1200},
     {"name": "経験値の書・大", "category": "経験値の書", "source": "", "effect": "経験値+6000", "exp": 6000},
+    {"name": "ハート回復薬・小", "category": "アイテム", "source": ""},
+    {"name": "絵馬経験値の勾玉・小", "category": "絵馬経験値の勾玉", "source": ""},
+    {"name": "絵馬経験値の勾玉・中", "category": "絵馬経験値の勾玉", "source": ""},
+    {"name": "絵馬経験値の勾玉・大", "category": "絵馬経験値の勾玉", "source": ""},
 ];

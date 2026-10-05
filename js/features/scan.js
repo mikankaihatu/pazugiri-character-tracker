@@ -178,7 +178,7 @@ function readCount(pixels, W, H, cell) {
 function nameCanvas(pixels, W, H, cell) {
     const d = cell.x1 - cell.x0;
     const x0 = Math.max(0, Math.round(cell.x0 - d * 0.3)), x1 = Math.min(W, Math.round(cell.x1 + d * 0.3));
-    const y0 = Math.round(cell.y1 + d * 0.1), y1 = Math.min(H, Math.round(cell.y1 + d * 0.45));
+    const y0 = Math.round(cell.y1 + d * 0.1), y1 = Math.min(H, Math.round(cell.y1 + d * 0.62));   // 名前は2行のこともある
     if (y1 - y0 < d * 0.2) return null;   // 名前が画面の外
     let minX = Infinity, minY = Infinity, maxX = -1, maxY = -1;
     const dark = (x, y) => { const i = (y * W + x) * 4; return pixels[i] < 150 && pixels[i + 1] < 150 && pixels[i + 2] < 150; };
@@ -232,7 +232,7 @@ async function readName(canvases) {
     const chars = [...new Set(allMaterials().join(''))].join('');
     let best = null;
     for (const canvas of canvases) {
-        for (const psm of ['7', '8', '10']) {
+        for (const psm of ['7', '6', '8', '10']) {
             await worker.setParameters({ tessedit_pageseg_mode: psm, tessedit_char_whitelist: chars });
             const text = (await worker.recognize(canvas)).data.text.replace(/\s/g, '');
             const match = closestMaterial(text);
@@ -274,11 +274,13 @@ async function scanScreenshots(files) {
                 if (!name) { unknown.push(count.count); continue; }
                 const sure = name.score === 0 && count.sure;
                 // 同じ素材が2枚のスクショに写っていたら、確かなほうを使う
-                if (!found[name.name] || (sure && !found[name.name].sure)) found[name.name] = { count: count.count, sure };
+                if (!found[name.name] || (sure && !found[name.name].sure)) found[name.name] = { count: count.count, sure, exactName: name.score === 0 };
             }
         }
         scanResults = allMaterials().filter(m => found[m]).map(m => ({
-            material: m, count: found[m].count, current: getCount(m), sure: found[m].sure, apply: true
+            material: m, count: found[m].count, current: getCount(m), sure: found[m].sure,
+            // 名前がぴったり読めなかった素材は、確かめてからチェックを入れてもらう
+            apply: found[m].exactName
         }));
         // 名前が読めなかったマスは、素材を選べる行にする（選ぶまで反映しない）
         unknown.forEach(count => scanResults.push({ material: '', count, current: '', sure: false, apply: false, pick: true }));
@@ -327,13 +329,13 @@ function cancelScan() {
 function renderScanBox() {
     let html = `<div class="card" style="margin-bottom: 16px;">
         <div class="card-title">📷 スクショから在庫を読み取る</div>
-        <div class="hint">ゲームの「アイテム一覧 → 贈物」のスクショを選ぶと、素材の名前と数を読み取ります。何枚でもまとめて選べます。画像はこの端末の中だけで処理します。</div>
+        <div class="hint">ゲームの「アイテム一覧」（贈物・アイテム）のスクショを選ぶと、素材の名前と数を読み取ります。何枚でもまとめて選べます。画像はこの端末の中だけで処理します。</div>
         <input type="file" accept="image/*" multiple ${scanBusy ? 'disabled' : ''} onchange="scanScreenshots(this.files)">
         ${scanMessage ? `<div class="hint" style="margin: 8px 0 0;">${escapeHtml(scanMessage)}</div>` : ''}`;
     if (scanResults.length > 0) {
         // 名前を選ぶ欄には、読み取れた素材とほかの欄で選んだ素材を出さない
         const usedMaterials = new Set(scanResults.map(r => r.material).filter(Boolean));
-        html += `<div class="hint" style="margin: 8px 0 4px;">数を確かめてから「在庫に反映」を押してください。<span style="background: #fff3cd;">黄色</span>の行は読み取りに自信がないところです。</div>
+        html += `<div class="hint" style="margin: 8px 0 4px;">数を確かめてから「在庫に反映」を押してください。<span style="background: #fff3cd;">黄色</span>の行は読み取りに自信がないところです（名前が自信のない行はチェックが外れています）。</div>
             <table class="stat-table">
                 <tr><th></th><th>素材</th><th>読み取った数</th><th>今の在庫</th></tr>
                 ${scanResults.map((r, i) => `<tr${r.sure ? '' : ' style="background: #fff3cd;"'}>
