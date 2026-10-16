@@ -227,7 +227,8 @@ def read_materials(ws_materials, ws_recipes):
         if effect:
             material['effect'] = effect
             # 効果が「経験値+150」なら、使うと増える経験値として読む（経験値の書）
-            if m := re.search(r'経験値\s*[+＋]\s*([\d０-９,，]+)', effect):
+            # 絵馬の経験値（絵馬経験値の勾玉）は刀剣男士の経験値ではないので読まない
+            if '絵馬' not in name and (m := re.search(r'経験値\s*[+＋]\s*([\d０-９,，]+)', effect)):
                 material['exp'] = int(re.sub(r'[,，]', '', unicodedata.normalize('NFKC', m.group(1))))
         if recipes.get(name):
             material['recipe'] = recipes[name]
