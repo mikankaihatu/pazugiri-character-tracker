@@ -59,7 +59,7 @@ const MATERIALS = [
     {"name": "経験値の書・中", "category": "経験値の書", "source": "", "effect": "経験値+1200", "exp": 1200},
     {"name": "経験値の書・大", "category": "経験値の書", "source": "", "effect": "経験値+6000", "exp": 6000},
     {"name": "ハート回復薬・小", "category": "アイテム", "source": ""},
-    {"name": "絵馬経験値の勾玉・小", "category": "絵馬経験値の勾玉", "source": ""},
-    {"name": "絵馬経験値の勾玉・中", "category": "絵馬経験値の勾玉", "source": ""},
+    {"name": "絵馬経験値の勾玉・小", "category": "絵馬経験値の勾玉", "source": "", "effect": "絵馬の経験値+200"},
+    {"name": "絵馬経験値の勾玉・中", "category": "絵馬経験値の勾玉", "source": "", "effect": "絵馬の経験値+800"},
     {"name": "絵馬経験値の勾玉・大", "category": "絵馬経験値の勾玉", "source": ""},
 ];
